@@ -43,10 +43,10 @@ class Map:
 
         for pos, build in self.map.items():
             rect = pygame.Rect(
-                transform(pos[0]*self.TW - self.camera.x,self.TW), 
-                transform(pos[1]*self.TH - self.camera.y,self.TH), 
+                pos[0]*self.TW - self.camera.x - self.TW/2,
+                pos[1]*self.TH - self.camera.y - self.TH/2,
                 build.w*self.TW, build.h*self.TH)
-            self.surf.blit(build.img, rect)
+            self.camera.render(build.img, rect, transform=True)
             if type(build) is Factory:
                 build.draw()
 
@@ -68,18 +68,16 @@ class Map:
         return x,y
     
     def click(self, mpos):
-        for pos, build in self.map.items():
-            if type(build) is Factory and pos == self.tile_from_screen(mpos, rround=True):
-                if self.game.guis.get(pos): self.game.guis.pop(pos)
-                else: self.game.guis[pos] = FactoryGui(build)
-                
+        pos = self.tile_from_screen(mpos, rround=True)
+        if self.map.get(pos):
+            if self.game.guis.get(pos): self.game.guis.pop(pos)
+            else: 
+                self.game.guis[pos] = self.map.get(pos).click()
+
     def hover(self, mpos):
         tx,ty = self.tile_from_screen(mpos, rround=True)
         x,y = tx*self.TW, ty*self.TH
         x -= self.camera.x
         y -= self.camera.y
-        # x -= self.camera.x%30
-        # y -= self.camera.y%30
-        rprint(self.camera.x%30)
         self.last_rect = pygame.Rect(x,y, *self.TILE_SIZE)
         self.last_rect.center = x,y

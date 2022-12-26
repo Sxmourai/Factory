@@ -1,25 +1,30 @@
-from time import time
+from ressources import Shape, load
 import pygame
-class Sprite:
+from time import time
+class Sprite(Shape):
+    W = 1
+    H = 1
     def __init__(self, imgpath, pos, game, size=None):
-        self.x, self.y = pos
+        self.w, self.h = size if size else (self.W, self.H)
+        super().__init__(pos, (self.w,self.h))
         self.camera = game.camera
         self.map = game.map
         self.game = game
-        self.img = pygame.image.load("img/"+imgpath)
-        self.w, self.h = size if size else (self.w, self.h)
-        self.img = pygame.transform.scale(self.img, (self.w*self.map.TW,self.h*self.map.TH))
+        self.img = load(imgpath, self.size, multiplier=self.map.TILE_SIZE)
         self.map.set(pos,(self.w,self.h), self)
+    def click(self):
+        print("Clicked !")
+
 class Core(Sprite):
-    w,h = 2,2
+    W,H = 2,2
     def __init__(self, pos, game):
-        super().__init__("core.png", pos, game, (self.w, self.h))
+        super().__init__("core.png", pos, game, (self.W, self.H))
 
 class Factory(Sprite):
-    w = 1
-    h = 1
+    W = 1
+    H = 1
     def __init__(self, pos, tier, game):
-        super().__init__("factory.png", pos, game, (self.w,self.h))
+        super().__init__("factory.png", pos, game, (self.W,self.H))
         self.buffer = 0
         self.max = 1000*tier
         self.gen = 1*tier

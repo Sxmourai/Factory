@@ -45,10 +45,12 @@ def get_vec(hyp, orientation):
     rad = radians(orientation)
     return sin(rad)*hyp, cos(rad)*hyp
 
-def load(imgpath, size=None):
+def load(imgpath, size=None, multiplier:tuple=(1,1)):
     imgpath = path(imgpath)
     img = pygame.image.load(imgpath)
-    if size: img = pygame.transform.scale(img, size)
+    if size: 
+        size = size[0]*multiplier[0], size[1]*multiplier[1]
+        img = pygame.transform.scale(img, size)
     return img
 
 class Shape:

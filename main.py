@@ -17,5 +17,4 @@ while running:
     game.handleKeys(pygame.key.get_pressed())
     running = game.handleEvents(pygame.event.get())
 
-
 pygame.quit()
