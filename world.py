@@ -1,0 +1,76 @@
+from ressources import load, transform
+from buildings import Factory
+from gui import FactoryGui
+import pygame
+
+class Map:
+    SCALE = 100
+    TILE_SIZE = (int(.3*SCALE), int(.3*SCALE))
+    TW, TH = TILE_SIZE
+    TILE_IMG = load("tile.png", TILE_SIZE)
+    TILE_IMG_HOVER = load("tile_selected.png", TILE_SIZE)
+    def __init__(self, size, game):
+        self.size = size
+        self.map = {}
+        self.surf = game.surf
+        self.camera = game.camera
+        self.game = game
+        self.last_rect = pygame.Rect(0,0,0,0)
+
+    def set(self, pos, size, obj):
+        self.map[pos] = obj
+        
+    def adj(self, coords):
+        adj = {}
+        x,y = coords
+        if self.map[(x+1, y)]:
+            adj['right'] = self.map[(x+1, y)]
+        if self.map[(x-1, y)]:
+            adj['left'] = self.map[(x-1, y)]
+        if self.map[(x, y+1)]:
+            adj['down'] = self.map[(x, y+1)]
+        if self.map[(x, y-1)]:
+            adj['up'] = self.map[(x, y-1)]
+        return adj
+    
+    def draw(self):
+        for i in range(round(self.surf.get_width()/self.TW+1)):
+            for j in range(round(self.surf.get_height()/self.TH+1)):
+                rect = pygame.Rect(transform(i*self.TW - self.camera.x, self.TW)+round(self.camera.x/self.TW)*self.TW, 
+                                   transform(j*self.TH - self.camera.y, self.TH)+round(self.camera.y/self.TH)*self.TH, *self.TILE_SIZE)
+                self.surf.blit(self.TILE_IMG, rect)
+        self.surf.blit(self.TILE_IMG_HOVER, self.last_rect)
+
+        for pos, build in self.map.items():
+            rect = pygame.Rect(
+                transform(pos[0]*self.TW - self.camera.x,self.TW), 
+                transform(pos[1]*self.TH - self.camera.y,self.TH), 
+                build.w*self.TW, build.h*self.TH)
+            self.surf.blit(build.img, rect)
+            if type(build) is Factory:
+                build.draw()
+
+    def in_tile(self, pos):
+        x = round(pos[0]/self.TW)
+        y = round(pos[1]/self.TH)
+        return x,y
+    
+    def tile_in_screen(self, pos):
+        x,y = self.pos_in_screen(pos)
+        return round(x/self.TW),round(y/self.TH)
+    
+    def pos_in_screen(self, pos):
+        x,y = pos
+        x = int(x/self.TW)*self.TW - (self.camera.x%self.TW)
+        y = int(y/self.TH)*self.TH - (self.camera.y%self.TH)
+        return x,y
+    
+    def click(self, mpos):
+        for pos, build in self.map.items():
+            if type(build) is Factory and pos == self.tile_in_screen(mpos):
+                if self.game.guis.get(pos): self.game.guis.pop(pos)
+                else: self.game.guis[pos] = FactoryGui(build)
+                
+    def hover(self, mpos):
+        x,y = self.pos_in_screen(mpos)
+        self.last_rect = pygame.Rect(x, y, *self.TILE_SIZE)
