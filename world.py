@@ -1,4 +1,4 @@
-from ressources import load, transform
+from ressources import load, transform,rprint
 from buildings import Factory
 from gui import FactoryGui
 import pygame
@@ -39,7 +39,7 @@ class Map:
                 rect = pygame.Rect(transform(i*self.TW - self.camera.x, self.TW)+round(self.camera.x/self.TW)*self.TW, 
                                    transform(j*self.TH - self.camera.y, self.TH)+round(self.camera.y/self.TH)*self.TH, *self.TILE_SIZE)
                 self.surf.blit(self.TILE_IMG, rect)
-        self.surf.blit(self.TILE_IMG_HOVER, self.last_rect)
+        self.camera.render(self.TILE_IMG_HOVER, self.last_rect)
 
         for pos, build in self.map.items():
             rect = pygame.Rect(
@@ -50,15 +50,17 @@ class Map:
             if type(build) is Factory:
                 build.draw()
 
-    def in_tile(self, pos):
-        x = round(pos[0]/self.TW)
-        y = round(pos[1]/self.TH)
-        return x,y
+    def in_tile(self, pos,y=None, rround:bool=False):
+        if type(y) in (int,float): pos = pos,y
+        if rround:
+            return round(pos[0]/self.TW), round(pos[1]/self.TH)
+        return pos[0]/self.TW, pos[1]/self.TH
     
-    def tile_in_screen(self, pos):
-        x,y = self.pos_in_screen(pos)
-        return round(x/self.TW),round(y/self.TH)
-    
+    def tile_from_screen(self, mpos, rround:bool=False):
+        x,y = mpos
+        tx,ty = self.in_tile(x+self.camera.x,y+self.camera.y, rround=rround)
+        return tx,ty
+        
     def pos_in_screen(self, pos):
         x,y = pos
         x = int(x/self.TW)*self.TW - (self.camera.x%self.TW)
@@ -67,10 +69,17 @@ class Map:
     
     def click(self, mpos):
         for pos, build in self.map.items():
-            if type(build) is Factory and pos == self.tile_in_screen(mpos):
+            if type(build) is Factory and pos == self.tile_from_screen(mpos, rround=True):
                 if self.game.guis.get(pos): self.game.guis.pop(pos)
                 else: self.game.guis[pos] = FactoryGui(build)
                 
     def hover(self, mpos):
-        x,y = self.pos_in_screen(mpos)
-        self.last_rect = pygame.Rect(x, y, *self.TILE_SIZE)
+        tx,ty = self.tile_from_screen(mpos, rround=True)
+        x,y = tx*self.TW, ty*self.TH
+        x -= self.camera.x
+        y -= self.camera.y
+        # x -= self.camera.x%30
+        # y -= self.camera.y%30
+        rprint(self.camera.x%30)
+        self.last_rect = pygame.Rect(x,y, *self.TILE_SIZE)
+        self.last_rect.center = x,y

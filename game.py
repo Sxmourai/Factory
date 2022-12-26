@@ -5,11 +5,13 @@ from gui import Button
 from buildings import Factory, Core
 import pygame
 from time import time
+from typing import Optional
 
 class Game:
     PLAYER_SIZE = (30,30)
     PLAYER_IMAGE = load("player.png", PLAYER_SIZE)
-    def __init__(self, size, screen_size):
+    def __init__(self, size, screen_size, ticks:Optional[int]=None):
+        self.clock = (pygame.time.Clock(), ticks)
         self.surf = pygame.display.set_mode(screen_size)
         self.camera = Camera((0,0), self.surf)
         self.map = Map(size, self)
@@ -19,7 +21,8 @@ class Game:
         self._life = time()
         self._tick = 0
         self.points = self.setup_points()
-    def get_life(self):
+    @property
+    def life(self):
         return time()-self._life
     
     def tick(self, need_set_tick:bool=True):
@@ -29,8 +32,9 @@ class Game:
     
     def draw(self):
         self.tick()
+        self.clock[0].tick(self.clock[1])
         self.map.draw()
-        self.camera.render(self.PLAYER_IMAGE, self.screen_center(),transform(self.PLAYER_SIZE))
+        self.camera.render(self.PLAYER_IMAGE, self.screen_center())
         for gui in self.guis.values():
             gui.draw()
         for button in self.buttons:

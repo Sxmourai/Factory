@@ -10,9 +10,13 @@ class Camera:
         vx,vy = get_vec(speed, direction)
         self.x += vx
         self.y += vy
-    def render(self, img,pos:tuple, size:tuple,  transform:Union[bool,tuple]=False):
-        x,y = pos
-        w,h = size
+    def render(self, img,pos_or_rect:Union[tuple, pygame.Rect], transform:Union[bool,tuple]=False):
+        w,h = img.get_size()
+        if type(pos_or_rect) == tuple:
+            x,y = pos_or_rect
+        else:
+            self.surf.blit(img, pos_or_rect)
+            return
         if transform == True:
             x -= w/2
             y -= h/2
