@@ -3,6 +3,7 @@ from world import Map
 from ressources import load, transform, sysFont, all, set_game
 from gui import Button
 from buildings import Factory, Core, Building
+from menu import Menu
 import pygame
 from time import time
 from typing import Optional
@@ -20,16 +21,18 @@ class Game:
         self.guis  = {}
         self.texts = {}
         self.buttons = []
+        self.menus = {(0,0): Menu((0,0), (300, 40), "gui_up.png")}
         self.construct_img = self.map.TILE_IMG_HOVER
         self._construct = None
         self._life = time()
         self._tick = 0
-        self._points = 0
+        self._points = 10
+        self.menus[(0,0)].add_text(f"Points: {self._points}", (20,5), font_size=30, center=False)
 
     @property
     def life(self):
         return time()-self._life
-    
+
     def construct(self, pos:tuple=(), building:Building=None):
         pos = pos if len(pos) == 2 else self.map.tile_from_screen(rround=True)
         if building:
@@ -49,7 +52,7 @@ class Game:
         self._construct = building
     def handleConstruct(self):
         if self._construct: self.construct()
-    
+
     def tick(self, need_set_tick:bool=True):
         if need_set_tick:
             self._tick = (pygame.time.get_ticks() - self._tick) / 10
@@ -63,9 +66,11 @@ class Game:
         for gui in self.guis.values():
             gui.draw()
         for button in self.buttons:
-            button.draw()        
+            button.draw()
         for text, textRect in self.texts.values():
             self.camera.render_textRect(text, textRect)
+        for menu in self.menus.values():
+            menu.draw()
         self.draw_points()
         pygame.display.flip()
         
@@ -87,7 +92,10 @@ class Game:
             if keys[pygame.K_c]:
                 self.construct_overlay(load("core.png",tile=True), Core)
             if keys[pygame.K_ESCAPE]:
-                self.construct_overlay(self.map.TILE_IMG_HOVER)
+                if self.construct_img == self.map.TILE_IMG_HOVER:
+                    self.guis = {}
+                else:
+                    self.construct_overlay(self.map.TILE_IMG_HOVER)
 
     def handleEvents(self, events):
         for event in events:
@@ -106,7 +114,8 @@ class Game:
         self._points = int(points)
 
     def draw_points(self):
-        self.texts[0] = self.camera.render_text(self.points, 30, (40,15))
+        self.menus[(0,0)].change_text(f"Points: {self._points}", (20,5))
+
     def add_button(self, order, size):
         self.buttons.append(Button("button.png", order, size, self.map))
         
@@ -134,3 +143,8 @@ class Game:
         return Factory(pos, tier)
     def core(self,pos:tuple):
         return Core(pos)
+    def buyable(self, price:float|int, buy_possible:bool=False):
+        if self.points >= price:
+            if buy_possible: self.points -= price
+            return True
+        return False

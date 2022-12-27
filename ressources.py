@@ -85,6 +85,8 @@ class Sprite:
         self.surf = self.game.surf
         self.camera = self.game.camera
         self.map = self.game.map
+    def draw_self(self):
+        self.camera.render(self.img, self.rect)
     @property
     def x(self):
         return self._x

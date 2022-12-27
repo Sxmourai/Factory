@@ -1,14 +1,11 @@
 """Module providing game core."""
 import pygame
 from game import Game
+from menu import Menu
 from ressources import rprint
 pygame.init()
-
+pygame.display.set_caption('Factory game')
 game = Game((100,100), (1000,700), ticks=60)
-core = game.core((4, 4))
-fac = game.factory((0, 1), 1)
-fac.construct()
-fac2 = game.factory((0, 0), 2)
 running = True
 while running:
     game.draw()

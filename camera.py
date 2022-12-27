@@ -25,7 +25,7 @@ class Camera:
             if transform[1]==True: y -= h/2
         self.surf.blit(img, pygame.Rect(x,y, w,h))
 
-    def render_text(self, text, fontSize_or_pos:Union[int, tuple], pos:Optional[tuple]=None, color:tuple=(0,0,0)) -> tuple:
+    def render_text(self, text, fontSize_or_pos:Union[int, tuple], pos:Optional[tuple]=None, color:tuple=(0,0,0), center:bool=True) -> tuple:
         """Renders text on self.surf
 
         Args:
@@ -47,7 +47,10 @@ class Camera:
         else:
             text = sysFont(fontSize_or_pos).render(str(text), True, color)
             textRect = text.get_rect()
-        textRect.center = pos
+        if center:
+            textRect.center = pos
+        else:
+            textRect.x, textRect.y = pos
         self.surf.blit(text, textRect)
         return (text, textRect)
     def render_textRect(self, text:pygame.Surface, textRect:pygame.Rect):

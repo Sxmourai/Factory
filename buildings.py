@@ -6,11 +6,11 @@ from time import time
 class Building(Sprite):
     W = 1
     H = 1
-    def __init__(self, imgpath, build_cost:int, pos:tuple=()):
+    def __init__(self, imgpath, build_cost:int|float, pos:tuple=()):
         super().__init__(pos, (self.W*get_map().TW, self.H*get_map().TH), imgpath)
+        self.build_cost = build_cost
         if len(pos) == 2:
             self.construct(pos)
-        self.build_cost = build_cost
         self._gui_state = False
         self._gui = None
     def toggle_click(self):
@@ -30,7 +30,7 @@ class Building(Sprite):
 class Core(Building):
     W,H = 2,2
     def __init__(self, pos):
-        super().__init__("core.png", pos)
+        super().__init__("core.png", 100, pos)
         self.tier = 1
     def gui(self):
         return super().gui(CoreGui(self))
@@ -39,7 +39,7 @@ class Factory(Building):
     W = 1
     H = 1
     def __init__(self, pos, tier=1):
-        super().__init__("factory.png", pos)
+        super().__init__("factory.png", 10, pos)
         self.buffer = 0
         self.max = 1000*tier
         self.gen = 1*tier
