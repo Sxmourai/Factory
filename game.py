@@ -1,20 +1,22 @@
 from camera import Camera
 from world import Map
-from ressources import load, transform, sysFont, all
+from ressources import load, transform, sysFont, all, set_game
 from gui import Button
 from buildings import Factory, Core
 import pygame
 from time import time
 from typing import Optional
 
+
 class Game:
     PLAYER_SIZE = (30,30)
     PLAYER_IMAGE = load("player.png", PLAYER_SIZE)
     def __init__(self, size, screen_size, ticks:Optional[int]=None):
+        set_game(self)
         self.clock = (pygame.time.Clock(), ticks)
         self.surf = pygame.display.set_mode(screen_size)
-        self.camera = Camera((0,0), self.surf)
-        self.map = Map(size, self)
+        self.camera = Camera((0,0))
+        self.map = Map(size)
         self.guis  = {}
         self.texts = {}
         self.buttons = []
@@ -100,6 +102,6 @@ class Game:
             button.handleHover(mpos)
             
     def factory(self,pos:tuple, tier:int):
-        return Factory(pos, tier, self)
+        return Factory(pos, tier)
     def core(self,pos:tuple):
-        return Core(pos, self)
+        return Core(pos)

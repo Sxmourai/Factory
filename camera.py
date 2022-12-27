@@ -1,10 +1,10 @@
-from ressources import get_vec, sysFont
+from ressources import get_vec, sysFont, get_surf
 import pygame
 from typing import Optional, Union
 class Camera:
-    def __init__(self, pos, surf) -> None:
+    def __init__(self, pos) -> None:
         self.x, self.y = pos
-        self.surf = surf
+        self.surf = get_surf()
     def move(self, direction, sprint):
         speed = 3*2 if sprint else 3
         vx,vy = get_vec(speed, direction)

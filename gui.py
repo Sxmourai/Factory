@@ -1,19 +1,14 @@
 from typing import Optional
-from ressources import load, sysFont, Shape, sc_center
+from ressources import load, sysFont, Sprite, sc_center, surf_width, surf_height
 import pygame
 
 
-class Gui(Shape):
-    def __init__(self, imgpath, font, title, game, size=None) -> None:
+class Gui(Sprite):
+    def __init__(self, imgpath, font, title, size=None) -> None:
         if size == None:
             size_factor = .6
-            size = (game.surf.get_width()*size_factor,game.surf.get_height()*size_factor)
-        self.surf = game.surf
-        super().__init__(*sc_center(self.surf), *size)
-        self.camera = game.camera
-        self.map = game.map
-        self.game = game
-        self.img = load(imgpath, size)
+            size = (surf_width()*size_factor,surf_height()*size_factor)
+        super().__init__(sc_center(), size, imgpath)
         self.font = font
         self._text = title
         self.text = font.render(title, True, (0, 0, 0))
@@ -29,10 +24,9 @@ class Gui(Shape):
         for button in self.buttons.values():
             button.draw()
     def add_button(self, id, text, size, *args, **kwargs):
-        x = self.surf.get_width()/2-size[0]/2
-        y = 50*len(self.buttons)+self.surf.get_height()/2-50
-        pos = x,y
-        self.button(id, Button("button.png", text, pos, size, self.map, *args, **kwargs))
+        x = surf_width()/2-size[0]/2
+        y = 50*len(self.buttons)+surf_height()/2-50
+        self.button(id, Button("button.png", text, (x,y), size, *args, **kwargs))
     def button(self, id:str, button):
         self.buttons[id] = button
     def handleClick(self, mpos):
@@ -49,38 +43,32 @@ class Gui(Shape):
 
 class FactoryGui(Gui):
     def __init__(self, factory) -> None:
-        super().__init__("gui.png", sysFont(30), f"Tier {factory.gen}", factory.game)
+        super().__init__("gui.png", sysFont(30), f"Tier {factory.gen}")
         self.add_button("retrieve", "Retrieve", (150,40), onClick=factory.retrieve)
         self.add_button("upgrade", f"Upgrade ({factory.cost})", (150,40), onClick=factory.upgrade)
         self.factory = factory
 
 class CoreGui(Gui):
     def __init__(self, core) -> None:
-        super().__init__("gui.png", sysFont(30), f"Tier {core.tier}", core.game)
+        super().__init__("gui.png", sysFont(30), f"Tier {core.tier}")
         #self.add_button(0, "Retrieve", (150,40), onClick=self.retrieve)
         self.core = core
 
 
-class Button:
-    def __init__(self, imgpath, text, pos, size, game, onClick=None,onHover=None) -> None:
-        self.size = size
-        self.x, self.y = pos
-        self.size = size
-        self.img = load(imgpath, self.size)
-        self.rect = pygame.Rect(self.x, self.y, *self.size)
+class Button(Sprite):
+    def __init__(self, imgpath, text, pos, size, onClick=None,onHover=None) -> None:
+        super().__init__(pos, size, imgpath)
         self.background = (0,0,0)
         self.onClick = onClick
         self.onHover = onHover
-        self.map = game.map
-        self.game = game
-        self.surf = game.surf
-        self.camera = game.camera
         self._text = text
         self.text = sysFont(30).render(text, True, (255,255,255))
+        
     def actualise_text(self, new_text:Optional[str]=None, new_font=None, color:tuple=(255,255,255)):
         if new_text and new_font: self.text = new_font.render(new_text, True, color)
         elif new_text: self.text = sysFont(30).render(new_text, True, color)
         elif new_font: self.text = new_font.render(self._text, True, color)
+        
     def handleClick(self, mpos):
         if self.rect.collidepoint(*mpos):
             if type(self.onClick) is tuple:
@@ -99,9 +87,8 @@ class Button:
                 self.onHover()
         return collide
     def draw(self):
-        self.rect = pygame.Rect(self.x, self.y, *self.size)
         pygame.draw.rect(self.surf, self.background, self.rect)
-        self.camera.render_text(self.text, (self.x+self.size[0]/2,self.y+self.size[1]/2))
+        self.camera.render_text(self.text, (self.x+self.w/2,self.y+self.h/2))
 
 
 class GuiButton(Button):
@@ -109,6 +96,6 @@ class GuiButton(Button):
     H = 40
     def __init__(self, text, gui, onClick=None) -> None:
         pos = len(gui.buttons)*self.H, sc_center(gui.surf)[0]
-        super().__init__(text, pos, (self.W,self.H), gui.game, onClick, self._onHover)
+        super().__init__(text, pos, (self.W,self.H), onClick, self._onHover)
     def _onHover(self):
         self.background = (255,255,255)

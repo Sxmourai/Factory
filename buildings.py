@@ -1,17 +1,13 @@
-from ressources import Shape, load
+from ressources import Sprite, load, get_map
 from gui import Gui, FactoryGui, CoreGui
 import pygame
 from time import time
-class Sprite(Shape):
+
+class Building(Sprite):
     W = 1
     H = 1
-    def __init__(self, imgpath, pos, game, size=None):
-        self.w, self.h = size if size else (self.W, self.H)
-        super().__init__(pos, (self.w,self.h))
-        self.camera = game.camera
-        self.map = game.map
-        self.game = game
-        self.img = load(imgpath, self.size, multiplier=self.map.TILE_SIZE)
+    def __init__(self, imgpath, pos):
+        super().__init__(pos, (self.W*get_map().TW, self.H*get_map().TH), imgpath)
         self.map.set(pos,(self.w,self.h), self)
         self._gui_state = False
         self._gui = None
@@ -22,19 +18,20 @@ class Sprite(Shape):
     def gui(self, gui):
         self._gui = gui
         return gui
-class Core(Sprite):
+
+class Core(Building):
     W,H = 2,2
-    def __init__(self, pos, game):
-        super().__init__("core.png", pos, game, (self.W, self.H))
+    def __init__(self, pos):
+        super().__init__("core.png", pos)
         self.tier = 1
     def gui(self):
         return super().gui(CoreGui(self))
 
-class Factory(Sprite):
+class Factory(Building):
     W = 1
     H = 1
-    def __init__(self, pos, tier, game):
-        super().__init__("factory.png", pos, game, (self.W,self.H))
+    def __init__(self, pos, tier):
+        super().__init__("factory.png", pos)
         self.buffer = 0
         self.max = 1000*tier
         self.gen = 1*tier
@@ -87,16 +84,18 @@ class Factory(Sprite):
     def draw(self):
         for ball in self.balls:
             ball.move()
-class Ball(Sprite):
-    height = .25
-    width = .25
-    def __init__(self, pos, speed, game):
-        super().__init__("ball.png", pos, game, (self.width,self.height))
-        self.vx, self.vy = speed
-        self.x, self.y = pos
-    def move(self):
-        self.x += self.vx
-        self.y += self.vy
+            
+
+# class Ball(Sprite):
+#     height = .25
+#     width = .25
+#     def __init__(self, pos, speed, game):
+#         super().__init__("ball.png", pos, game, (self.width,self.height))
+#         self.vx, self.vy = speed
+#         self.x, self.y = pos
+#     def move(self):
+#         self.x += self.vx
+#         self.y += self.vy
 
 
 

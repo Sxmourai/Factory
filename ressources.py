@@ -3,9 +3,22 @@ import pygame
 from typing import Optional, Union
 from time import time
 
+_game = []
+def set_game(game):
+    _game.clear()
+    _game.append(game)
+def get_game():
+    return _game[0]
+def get_map():
+    return _game[0].map
+def get_surf():
+    return _game[0].surf
+
+surf_width = lambda: _game[0].surf.get_width()
+surf_height = lambda: _game[0].surf.get_height()
 sysFont = lambda size: pygame.font.Font(None,size)
 path = lambda path: "C:\\Users\\Sxmourai\\Documents\\Projets\\Python - Factory\\img\\"+path
-sc_center = lambda surf: (surf.get_width()/2, surf.get_height()/2)
+sc_center = lambda: (_game[0].surf.get_width()/2, _game[0].surf.get_height()/2)
 
 def all(array, val, empty=True):
     if len(array) == 0:return empty
@@ -58,15 +71,17 @@ def load(imgpath, size=None, multiplier:tuple=(1,1)):
         img = pygame.transform.scale(img, size)
     return img
 
-class Shape:
-    def __init__(self, pos_or_x:Union[tuple, int,float], size_or_y:Union[tuple, int,float], width:Optional[int]=None, height:Optional[int]=None):
-        if type(pos_or_x) == tuple:
-            self._x, self._y = pos_or_x
-            self._w, self._y = size_or_y
-        else: 
-            self._x,self._y = pos_or_x,size_or_y
-            self._w,self._h = width,height
 
+class Sprite:
+    def __init__(self, pos:tuple, size:tuple, imgpath):
+        self._x, self._y = pos
+        self._w, self._h = size
+        self._rect = pygame.Rect(*pos,*size)
+        self.img = load(imgpath, size)
+        self.game = get_game()
+        self.surf = self.game.surf
+        self.camera = self.game.camera
+        self.map = self.game.map
     @property
     def x(self):
         return self._x
@@ -100,12 +115,24 @@ class Shape:
         return (self._x,self._y)
     @pos.setter
     def pos(self, pos):
-        self._x, self._y = pos
+        if pos != self._pos:
+            self.rect.x,self.rect.y = pos
+            self._x, self._y = pos
         
     @property
     def size(self):
         return (self._w,self._h)
     @size.setter
     def size(self, size):
-        self._w, self._h = size
-        
+        if size != self.size: 
+            self.img = pygame.transform.scale(self.img, size)
+            self.rect.size = size
+            self._w, self._h = size
+    @property
+    def rect(self):
+        return self._rect
+    @rect.setter
+    def rect(self, rect:tuple | pygame.Rect):
+        if type(rect) == tuple:
+            rect = pygame.Rect(*rect)
+        self._rect = rect

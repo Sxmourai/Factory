@@ -1,4 +1,4 @@
-from ressources import load, transform,rprint
+from ressources import load, transform,rprint, get_game
 from buildings import Factory
 from gui import FactoryGui
 import pygame
@@ -9,12 +9,12 @@ class Map:
     TW, TH = TILE_SIZE
     TILE_IMG = load("tile.png", TILE_SIZE)
     TILE_IMG_HOVER = load("tile_selected.png", TILE_SIZE)
-    def __init__(self, size, game):
+    def __init__(self, size):
         self.size = size
         self.map = {}
-        self.surf = game.surf
-        self.camera = game.camera
-        self.game = game
+        self.game = get_game()
+        self.surf = self.game.surf
+        self.camera = self.game.camera
         self.last_rect = pygame.Rect(0,0,0,0)
 
     def draw(self):
