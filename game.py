@@ -20,13 +20,27 @@ class Game:
         self.guis  = {}
         self.texts = {}
         self.buttons = []
+        self._construct = self.map.TILE_IMG_HOVER
         self._life = time()
         self._tick = 0
         self._points = 0
+
     @property
     def life(self):
         return time()-self._life
-    
+    @property
+    def construct(self):
+        return self._construct
+    @construct.setter
+    def construct(self, img_path_or_size:tuple | str | pygame.Surface):
+        if type(img_path_or_size) == tuple:
+            self._construct = load(*img_path_or_size)
+        elif type(img_path_or_size) == pygame.Surface:
+            self._construct = img_path_or_size
+        else:
+            self._construct = load(img_path_or_size, self.map.TILE_SIZE)
+        if self._construct != self.map.TILE_IMG_HOVER: self._construct.set_alpha(125)
+
     def tick(self, need_set_tick:bool=True):
         if need_set_tick:
             self._tick = (pygame.time.get_ticks() - self._tick) / 10
@@ -59,6 +73,12 @@ class Game:
                 self.camera.move(90, keys[pygame.K_SPACE])
             if keys[pygame.K_LEFT]:
                 self.camera.move(270, keys[pygame.K_SPACE])
+            if keys[pygame.K_f]:
+                self.construct = "factory.png"
+            if keys[pygame.K_c]:
+                self.construct = "core.png"
+            if keys[pygame.K_ESCAPE]:
+                self.construct = self.map.TILE_IMG_HOVER
                 
     def handleEvents(self, events):
         for event in events:
@@ -97,7 +117,6 @@ class Game:
                 if not gui_clicked:
                     self.guis = {}
     def hover(self, mpos):
-        self.map.hover(mpos)
         for button in self.buttons:
             button.handleHover(mpos)
             

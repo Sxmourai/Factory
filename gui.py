@@ -18,9 +18,9 @@ class Gui(Sprite):
         elif new_text: self.text = self.font.render(new_text, True, (0, 0, 0))
         elif new_font: self.text = new_font.render(self._text, True, (0, 0, 0))
     def draw(self):
-        center = ((self.surf.get_width()-self.w)/2, (self.surf.get_height()-self.h)/2)
+        center = ((surf_width()-self.w)/2, (surf_height()-self.h)/2)
         self.camera.render(self.img, center, self.size)
-        self.camera.render_text(self.text, ((self.surf.get_width()/2), 180))
+        self.camera.render_text(self.text, ((surf_width()/2), 180))
         for button in self.buttons.values():
             button.draw()
     def add_button(self, id, text, size, *args, **kwargs):

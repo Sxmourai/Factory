@@ -16,14 +16,12 @@ class Map:
         self.surf = self.game.surf
         self.camera = self.game.camera
         self.last_rect = pygame.Rect(0,0,0,0)
-
     def draw(self):
         for i in range(round(self.surf.get_width()/self.TW+1)):
             for j in range(round(self.surf.get_height()/self.TH+1)):
                 rect = pygame.Rect(transform(i*self.TW - self.camera.x, self.TW)+round(self.camera.x/self.TW)*self.TW, 
                                    transform(j*self.TH - self.camera.y, self.TH)+round(self.camera.y/self.TH)*self.TH, *self.TILE_SIZE)
                 self.surf.blit(self.TILE_IMG, rect)
-        self.camera.render(self.TILE_IMG_HOVER, self.last_rect)
 
         for pos, build in self.map.items():
             rect = pygame.Rect(
@@ -33,6 +31,8 @@ class Map:
             self.camera.render(build.img, rect, transform=True)
             if type(build) is Factory:
                 build.draw()
+        self.hover(pygame.mouse.get_pos())
+        self.camera.render(self.game.construct, self.last_rect)
 
     def in_tile(self, pos,y=None, rround:bool=False):
         if type(y) in (int,float): pos = pos,y
@@ -70,6 +70,14 @@ class Map:
             adj['up'] = self.map[(x, y-1)]
         return adj
     
+    def select(self, img:pygame.Surface | None=None):
+        if img == None:
+            self.hover_img = self.TILE_IMG_HOVER
+        else:
+            self.hover_img = img
+
+    def get_from_mpos(self, mpos):
+        return self.get(self.tile_from_screen(mpos, rround=True))
 
     def hover(self, mpos):
         tx,ty = self.tile_from_screen(mpos, rround=True)
