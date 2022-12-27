@@ -52,3 +52,14 @@ class Camera:
         return (text, textRect)
     def render_textRect(self, text:pygame.Surface, textRect:pygame.Rect):
         self.surf.blit(text,textRect)
+    def collide(self, pos:tuple, size:tuple, point:tuple):
+        return self.get_rect(pos, size).collidepoint(point)
+    def get_rect(self, pos:tuple, size:tuple):
+        rect = pygame.Rect(0,0, *size)
+        rect.center = pos
+        return rect
+    def center_rect(self, rect:pygame.Rect, pos:Optional[tuple]=None):
+        if pos:
+            rect.center = pos
+        else:
+            rect.center = rect.x,rect.y

@@ -1,4 +1,5 @@
 from ressources import Shape, load
+from gui import Gui, FactoryGui, CoreGui
 import pygame
 from time import time
 class Sprite(Shape):
@@ -13,12 +14,22 @@ class Sprite(Shape):
         self.img = load(imgpath, self.size, multiplier=self.map.TILE_SIZE)
         self.map.set(pos,(self.w,self.h), self)
     def click(self):
-        print("Clicked !")
-
+        guis = self.game.guis
+        gui = guis.get(self.pos)
+        
+        if gui:
+            guis.pop(self.pos)
+        else: guis[self.pos] = self.gui()
+        
+    def gui(self):
+        return FactoryGui(self)
 class Core(Sprite):
     W,H = 2,2
     def __init__(self, pos, game):
         super().__init__("core.png", pos, game, (self.W, self.H))
+        self.tier = 1
+    def gui(self):
+        return CoreGui(self)
 
 class Factory(Sprite):
     W = 1
@@ -76,3 +87,6 @@ class Ball(Sprite):
     def move(self):
         self.x += self.vx
         self.y += self.vy
+
+
+

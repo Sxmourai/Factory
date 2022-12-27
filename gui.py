@@ -12,7 +12,7 @@ class Gui(Shape):
         self.img = load(imgpath, size)
         self.text = font.render(title, True, (0, 0, 0))
         self.buttons = []
-        
+
     def draw(self):
         center = ((self.surf.get_width()-self.w)/2, (self.surf.get_height()-self.h)/2)
         self.camera.render(self.img, center, self.size)
@@ -21,15 +21,20 @@ class Gui(Shape):
             button.draw()
     def add_button(self, order, text, size, *args, **kwargs):
         x = self.surf.get_width()/2-size[0]/2
-        y = 210+(50*order)
+        y = 50*order+self.surf.get_height()/2-50
         pos = x,y
         self.buttons.append(Button("button.png", text, pos, size, self.map, *args, **kwargs))
     def handleClick(self, mpos):
-        for button in self.buttons:
-            button.handleClick(mpos)
+        if self.camera.collide(self.pos, self.size, mpos):
+            for button in self.buttons:
+                button.handleClick(mpos)
+            return True
+        return False
     def handleHover(self, mpos):
+        to_return = True
         for button in self.buttons:
-            button.handleHover(mpos)
+            if button.handleHover(mpos): to_return = False
+        return to_return
 
 class FactoryGui(Gui):
     def __init__(self, factory) -> None:
@@ -38,6 +43,12 @@ class FactoryGui(Gui):
         self.factory = factory
     def retrieve(self):
         self.factory.retrieve()
+        
+class CoreGui(Gui):
+    def __init__(self, core) -> None:
+        super().__init__("gui.png", sysFont(30), f"Tier {core.tier}", (200,200), core.game)
+        #self.add_button(0, "Retrieve", (150,40), onClick=self.retrieve)
+        self.core = core
 
 class Button:
     def __init__(self, imgpath, text, pos, size, game, onClick=None,onHover=None) -> None:
@@ -60,16 +71,16 @@ class Button:
                 self.onClick[0](*self.onClick[1])
             elif callable(self.onClick):
                 self.onClick()
+            return True
+        return False
 
     def handleHover(self, mpos):
         collide = self.rect.collidepoint(*mpos)
-        if self.onHover:
+        if self.onHover and collide:
             if type(self.onHover) is tuple:
                 self.onHover[0](*self.onHover[1])
             elif callable(self.onHover):
                 self.onHover()
-        if collide: self.background = (255,255,255)
-        else: self.background = (0,0,0)
         return collide
     def draw(self):
         self.rect = pygame.Rect(self.x, self.y, *self.size)

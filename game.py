@@ -1,6 +1,6 @@
 from camera import Camera
 from world import Map
-from ressources import load, transform, sysFont
+from ressources import load, transform, sysFont, all
 from gui import Button
 from buildings import Factory, Core
 import pygame
@@ -79,12 +79,18 @@ class Game:
         self.buttons.append(Button("button.png", order, size, self.map))
         
     def click(self, mpos):
-        self.map.click(mpos)
-        for gui in self.guis.values():
-            gui.handleClick(mpos)
+        pos = self.map.tile_from_screen(mpos, rround=True)
+        build = self.map.get(pos)
+        if build:
+            build.click()
+
+        clicks = [build!=None]
         for button in self.buttons:
-            button.handleClick(mpos)
-            
+            clicks.append(button.handleClick(mpos))
+        for gui in self.guis.values():
+            clicks.append(gui.handleClick(mpos))
+        if all(clicks, False, False) and len(self.guis) > 0:
+            self.guis = {}
     def hover(self, mpos):
         self.map.hover(mpos)
         for button in self.buttons:

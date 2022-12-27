@@ -17,22 +17,6 @@ class Map:
         self.game = game
         self.last_rect = pygame.Rect(0,0,0,0)
 
-    def set(self, pos, size, obj):
-        self.map[pos] = obj
-        
-    def adj(self, coords):
-        adj = {}
-        x,y = coords
-        if self.map[(x+1, y)]:
-            adj['right'] = self.map[(x+1, y)]
-        if self.map[(x-1, y)]:
-            adj['left'] = self.map[(x-1, y)]
-        if self.map[(x, y+1)]:
-            adj['down'] = self.map[(x, y+1)]
-        if self.map[(x, y-1)]:
-            adj['up'] = self.map[(x, y-1)]
-        return adj
-    
     def draw(self):
         for i in range(round(self.surf.get_width()/self.TW+1)):
             for j in range(round(self.surf.get_height()/self.TH+1)):
@@ -67,12 +51,25 @@ class Map:
         y = int(y/self.TH)*self.TH - (self.camera.y%self.TH)
         return x,y
     
-    def click(self, mpos):
-        pos = self.tile_from_screen(mpos, rround=True)
-        if self.map.get(pos):
-            if self.game.guis.get(pos): self.game.guis.pop(pos)
-            else: 
-                self.game.guis[pos] = self.map.get(pos).click()
+    def get(self, index, returns=None):
+        return self.map.get(index, returns)
+    def pop(self, index):
+        return self.map.pop(index)
+    def set(self, pos, size, obj):
+        self.map[pos] = obj
+    def adj(self, coords):
+        adj = {}
+        x,y = coords
+        if self.get((x+1, y)):
+            adj['right'] = self.map[(x+1, y)]
+        if self.get((x-1, y)):
+            adj['left'] = self.map[(x-1, y)]
+        if self.get((x, y+1)):
+            adj['down'] = self.map[(x, y+1)]
+        if self.get((x, y-1)):
+            adj['up'] = self.map[(x, y-1)]
+        return adj
+    
 
     def hover(self, mpos):
         tx,ty = self.tile_from_screen(mpos, rround=True)

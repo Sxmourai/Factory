@@ -7,6 +7,11 @@ sysFont = lambda size: pygame.font.Font(None,size)
 path = lambda path: "C:\\Users\\Sxmourai\\Documents\\Projets\\Python - Factory\\img\\"+path
 sc_center = lambda surf: (surf.get_width()/2, surf.get_height()/2)
 
+def all(array, val, empty=True):
+    if len(array) == 0:return empty
+    for value in array:
+        if value != val: return False
+    return True
 def transform(size:Union[tuple, int, float], transformer:(Optional[Union[int, float]])=None):
     """Function to center elements
     Args:
