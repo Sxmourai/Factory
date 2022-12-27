@@ -13,23 +13,22 @@ class Sprite(Shape):
         self.game = game
         self.img = load(imgpath, self.size, multiplier=self.map.TILE_SIZE)
         self.map.set(pos,(self.w,self.h), self)
-    def click(self):
-        guis = self.game.guis
-        gui = guis.get(self.pos)
-        
-        if gui:
-            guis.pop(self.pos)
-        else: guis[self.pos] = self.gui()
-        
-    def gui(self):
-        return FactoryGui(self)
+        self._gui_state = False
+        self._gui = None
+    def toggle_click(self):
+        if self._gui_state == True: self._gui_state = False
+        else: self._gui_state = True
+        return self._gui_state
+    def gui(self, gui):
+        self._gui = gui
+        return gui
 class Core(Sprite):
     W,H = 2,2
     def __init__(self, pos, game):
         super().__init__("core.png", pos, game, (self.W, self.H))
         self.tier = 1
     def gui(self):
-        return CoreGui(self)
+        return super().gui(CoreGui(self))
 
 class Factory(Sprite):
     W = 1
@@ -43,6 +42,8 @@ class Factory(Sprite):
         self.balls = []
         self.last = time()
         self.cost = 10*self.gen
+    def gui(self):
+        return super().gui(FactoryGui(self))
     def output(self):
         delta = time()-self.last
         points = self.gen * delta
@@ -73,11 +74,16 @@ class Factory(Sprite):
         delta = time()-self.last
         points = self.gen * delta
         if points >= 1:
-            self.game.add_points(points)
+            self.game.points += points
             self.last = time()
     def upgrade(self):
-        self.gen += 1
-        self.game.points = self.game.points - self.cost
+        n_points = self.game.points - self.cost
+        if n_points >= 0:
+            self.game.points = n_points
+            self.gen += 1
+            self.cost = 10*self.gen
+            self._gui.actualise_text(new_text=f"Tier {self.gen}")
+            self._gui.buttons["upgrade"].actualise_text(f"Upgrade ({self.cost})")
     def draw(self):
         for ball in self.balls:
             ball.move()

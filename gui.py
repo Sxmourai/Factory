@@ -1,53 +1,62 @@
+from typing import Optional
 from ressources import load, sysFont, Shape, sc_center
 import pygame
 
 
 class Gui(Shape):
-    def __init__(self, imgpath, font, title, size, game) -> None:
+    def __init__(self, imgpath, font, title, game, size=None) -> None:
+        if size == None:
+            size_factor = .6
+            size = (game.surf.get_width()*size_factor,game.surf.get_height()*size_factor)
         self.surf = game.surf
         super().__init__(*sc_center(self.surf), *size)
         self.camera = game.camera
         self.map = game.map
         self.game = game
         self.img = load(imgpath, size)
+        self.font = font
+        self._text = title
         self.text = font.render(title, True, (0, 0, 0))
-        self.buttons = []
-
+        self.buttons = {}
+    def actualise_text(self, new_text:Optional[str]=None, new_font=None):
+        if new_text and new_font: self.text = new_font.render(new_text, True, (0, 0, 0))
+        elif new_text: self.text = self.font.render(new_text, True, (0, 0, 0))
+        elif new_font: self.text = new_font.render(self._text, True, (0, 0, 0))
     def draw(self):
         center = ((self.surf.get_width()-self.w)/2, (self.surf.get_height()-self.h)/2)
         self.camera.render(self.img, center, self.size)
         self.camera.render_text(self.text, ((self.surf.get_width()/2), 180))
-        for button in self.buttons:
+        for button in self.buttons.values():
             button.draw()
-    def add_button(self, text, size, *args, **kwargs):
+    def add_button(self, id, text, size, *args, **kwargs):
         x = self.surf.get_width()/2-size[0]/2
         y = 50*len(self.buttons)+self.surf.get_height()/2-50
         pos = x,y
-        self.button(Button("button.png", text, pos, size, self.map, *args, **kwargs))
-    def button(self, button):
-        self.buttons.append(button)
+        self.button(id, Button("button.png", text, pos, size, self.map, *args, **kwargs))
+    def button(self, id:str, button):
+        self.buttons[id] = button
     def handleClick(self, mpos):
         if self.camera.collide(self.pos, self.size, mpos):
-            for button in self.buttons:
+            for button in self.buttons.values():
                 button.handleClick(mpos)
             return True
         return False
     def handleHover(self, mpos):
         to_return = True
-        for button in self.buttons:
+        for button in self.buttons.values():
             if button.handleHover(mpos): to_return = False
         return to_return
 
 class FactoryGui(Gui):
     def __init__(self, factory) -> None:
-        super().__init__("gui.png", sysFont(30), f"Tier {factory.gen}", (200,200), factory.game)
-        self.add_button("Retrieve", (150,40), onClick=factory.retrieve)
-        self.add_button("Upgrade", (150,40), onClick=factory.upgrade)
+        super().__init__("gui.png", sysFont(30), f"Tier {factory.gen}", factory.game)
+        self.add_button("retrieve", "Retrieve", (150,40), onClick=factory.retrieve)
+        self.add_button("upgrade", f"Upgrade ({factory.cost})", (150,40), onClick=factory.upgrade)
         self.factory = factory
 
 class CoreGui(Gui):
     def __init__(self, core) -> None:
-        super().__init__("gui.png", sysFont(30), f"Tier {core.tier}", (200,200), core.game)
+        super().__init__("gui.png", sysFont(30), f"Tier {core.tier}", core.game)
         #self.add_button(0, "Retrieve", (150,40), onClick=self.retrieve)
         self.core = core
 
@@ -66,7 +75,12 @@ class Button:
         self.game = game
         self.surf = game.surf
         self.camera = game.camera
+        self._text = text
         self.text = sysFont(30).render(text, True, (255,255,255))
+    def actualise_text(self, new_text:Optional[str]=None, new_font=None, color:tuple=(255,255,255)):
+        if new_text and new_font: self.text = new_font.render(new_text, True, color)
+        elif new_text: self.text = sysFont(30).render(new_text, True, color)
+        elif new_font: self.text = new_font.render(self._text, True, color)
     def handleClick(self, mpos):
         if self.rect.collidepoint(*mpos):
             if type(self.onClick) is tuple:

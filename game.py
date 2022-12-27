@@ -20,7 +20,7 @@ class Game:
         self.buttons = []
         self._life = time()
         self._tick = 0
-        self.points = self.setup_points()
+        self._points = 0
     @property
     def life(self):
         return time()-self._life
@@ -41,7 +41,7 @@ class Game:
             button.draw()        
         for text, textRect in self.texts.values():
             self.camera.render_textRect(text, textRect)
-    
+        self.draw_points()
         pygame.display.flip()
         
     def screen_center(self):
@@ -67,30 +67,33 @@ class Game:
             elif event.type == pygame.MOUSEMOTION:
                 self.hover(pygame.mouse.get_pos())
         return True
-    
-    def add_points(self, points):
-        self.points += int(points)
+    @property
+    def points(self):
+        return self._points
+    @points.setter
+    def points(self, points):
+        self._points = int(points)
+
+    def draw_points(self):
         self.texts[0] = self.camera.render_text(self.points, 30, (40,15))
-    def setup_points(self):
-        self.texts[0] = self.camera.render_text("0", 30, (40,15))
-        return 0
-    
     def add_button(self, order, size):
         self.buttons.append(Button("button.png", order, size, self.map))
         
     def click(self, mpos):
         pos = self.map.tile_from_screen(mpos, rround=True)
         build = self.map.get(pos)
+        
         if build:
-            build.click()
-
-        clicks = [build!=None]
-        for button in self.buttons:
-            clicks.append(button.handleClick(mpos))
-        for gui in self.guis.values():
-            clicks.append(gui.handleClick(mpos))
-        if all(clicks, False, False) and len(self.guis) > 0:
-            self.guis = {}
+            if pos in self.guis:
+                self.guis = {}
+            else:
+                self.guis = {}
+                self.guis[pos] = build.gui()
+        else:
+            for gui in self.guis.values():
+                gui_clicked = gui.handleClick(mpos)
+                if not gui_clicked:
+                    self.guis = {}
     def hover(self, mpos):
         self.map.hover(mpos)
         for button in self.buttons:
