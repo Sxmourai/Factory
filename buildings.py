@@ -42,6 +42,7 @@ class Factory(Sprite):
         self.edges = []
         self.balls = []
         self.last = time()
+        self.cost = 10*self.gen
     def output(self):
         delta = time()-self.last
         points = self.gen * delta
@@ -74,6 +75,9 @@ class Factory(Sprite):
         if points >= 1:
             self.game.add_points(points)
             self.last = time()
+    def upgrade(self):
+        self.gen += 1
+        self.game.points = self.game.points - self.cost
     def draw(self):
         for ball in self.balls:
             ball.move()
