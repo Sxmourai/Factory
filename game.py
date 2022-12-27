@@ -2,7 +2,7 @@ from camera import Camera
 from world import Map
 from ressources import load, transform, sysFont, all, set_game
 from gui import Button
-from buildings import Factory, Core
+from buildings import Factory, Core, Building
 import pygame
 from time import time
 from typing import Optional
@@ -20,7 +20,8 @@ class Game:
         self.guis  = {}
         self.texts = {}
         self.buttons = []
-        self._construct = self.map.TILE_IMG_HOVER
+        self.construct_img = self.map.TILE_IMG_HOVER
+        self._construct = None
         self._life = time()
         self._tick = 0
         self._points = 0
@@ -28,24 +29,32 @@ class Game:
     @property
     def life(self):
         return time()-self._life
-    @property
-    def construct(self):
-        return self._construct
-    @construct.setter
-    def construct(self, img_path_or_size:tuple | str | pygame.Surface):
-        if type(img_path_or_size) == tuple:
-            self._construct = load(*img_path_or_size)
-        elif type(img_path_or_size) == pygame.Surface:
-            self._construct = img_path_or_size
-        else:
-            self._construct = load(img_path_or_size, self.map.TILE_SIZE)
-        if self._construct != self.map.TILE_IMG_HOVER: self._construct.set_alpha(125)
+    
+    def construct(self, pos:tuple=(), building:Building=None):
+        pos = pos if len(pos) == 2 else self.map.tile_from_screen(rround=True)
+        if building:
+            building.construct(pos)
+        elif self._construct:
+            self._construct(pos)
+        else:return False
 
+    def construct_overlay(self, img_path_or_size:tuple | str | pygame.Surface, building:Optional[Building]=None):
+        if type(img_path_or_size) == tuple:
+            self.construct_img = load(*img_path_or_size)
+        elif type(img_path_or_size) == pygame.Surface:
+            self.construct_img = img_path_or_size
+        else:
+            self.construct_img = load(img_path_or_size, self.map.TILE_SIZE)
+        if self.construct_img != self.map.TILE_IMG_HOVER: self.construct_img.set_alpha(125)
+        self._construct = building
+    def handleConstruct(self):
+        if self._construct: self.construct()
+    
     def tick(self, need_set_tick:bool=True):
         if need_set_tick:
             self._tick = (pygame.time.get_ticks() - self._tick) / 10
         return self._tick
-    
+
     def draw(self):
         self.tick()
         self.clock[0].tick(self.clock[1])
@@ -74,12 +83,12 @@ class Game:
             if keys[pygame.K_LEFT]:
                 self.camera.move(270, keys[pygame.K_SPACE])
             if keys[pygame.K_f]:
-                self.construct = "factory.png"
+                self.construct_overlay(load("factory.png",tile=True), Factory)
             if keys[pygame.K_c]:
-                self.construct = "core.png"
+                self.construct_overlay(load("core.png",tile=True), Core)
             if keys[pygame.K_ESCAPE]:
-                self.construct = self.map.TILE_IMG_HOVER
-                
+                self.construct_overlay(self.map.TILE_IMG_HOVER)
+
     def handleEvents(self, events):
         for event in events:
             if event.type == pygame.QUIT:
@@ -112,6 +121,7 @@ class Game:
                 self.guis = {}
                 self.guis[pos] = build.gui()
         else:
+            self.handleConstruct()
             for gui in self.guis.values():
                 gui_clicked = gui.handleClick(mpos)
                 if not gui_clicked:

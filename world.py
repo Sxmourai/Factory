@@ -32,7 +32,7 @@ class Map:
             if type(build) is Factory:
                 build.draw()
         self.hover(pygame.mouse.get_pos())
-        self.camera.render(self.game.construct, self.last_rect)
+        self.camera.render(self.game.construct_img, self.last_rect)
 
     def in_tile(self, pos,y=None, rround:bool=False):
         if type(y) in (int,float): pos = pos,y
@@ -40,8 +40,10 @@ class Map:
             return round(pos[0]/self.TW), round(pos[1]/self.TH)
         return pos[0]/self.TW, pos[1]/self.TH
     
-    def tile_from_screen(self, mpos, rround:bool=False):
-        x,y = mpos
+    def tile_from_screen(self, mpos:tuple=(), rround:bool=False):
+        if len(mpos) == 2:
+            x,y = mpos
+        else: x,y = pygame.mouse.get_pos()
         tx,ty = self.in_tile(x+self.camera.x,y+self.camera.y, rround=rround)
         return tx,ty
         
@@ -55,7 +57,7 @@ class Map:
         return self.map.get(index, returns)
     def pop(self, index):
         return self.map.pop(index)
-    def set(self, pos, size, obj):
+    def set(self, pos, obj, size=(1,1)):
         self.map[pos] = obj
     def adj(self, coords):
         adj = {}

@@ -6,9 +6,11 @@ from time import time
 class Building(Sprite):
     W = 1
     H = 1
-    def __init__(self, imgpath, pos):
+    def __init__(self, imgpath, build_cost:int, pos:tuple=()):
         super().__init__(pos, (self.W*get_map().TW, self.H*get_map().TH), imgpath)
-        self.map.set(pos,(self.w,self.h), self)
+        if len(pos) == 2:
+            self.construct(pos)
+        self.build_cost = build_cost
         self._gui_state = False
         self._gui = None
     def toggle_click(self):
@@ -18,6 +20,12 @@ class Building(Sprite):
     def gui(self, gui):
         self._gui = gui
         return gui
+    def construct(self, pos=None):
+        if self.game.buyable(self.build_cost, buy_possible=True):
+            pos = pos if pos else self.pos
+            self.map.set(pos, self, self.size)
+            self.pos = pos
+            self.constructed = True
 
 class Core(Building):
     W,H = 2,2
@@ -30,7 +38,7 @@ class Core(Building):
 class Factory(Building):
     W = 1
     H = 1
-    def __init__(self, pos, tier):
+    def __init__(self, pos, tier=1):
         super().__init__("factory.png", pos)
         self.buffer = 0
         self.max = 1000*tier

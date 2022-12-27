@@ -63,18 +63,21 @@ def get_vec(hyp, orientation):
     rad = radians(orientation)
     return sin(rad)*hyp, cos(rad)*hyp
 
-def load(imgpath, size=None, multiplier:tuple=(1,1)):
+def load(imgpath, size=None, multiplier:tuple=(1,1), tile:bool=False):
     imgpath = path(imgpath)
     img = pygame.image.load(imgpath)
     if size: 
         size = size[0]*multiplier[0], size[1]*multiplier[1]
         img = pygame.transform.scale(img, size)
+    if tile: 
+        img = pygame.transform.scale(img, get_map().TILE_SIZE)
     return img
 
 
 class Sprite:
-    def __init__(self, pos:tuple, size:tuple, imgpath):
-        self._x, self._y = pos
+    def __init__(self, pos:tuple|None, size:tuple, imgpath):
+        if pos:
+            self._x, self._y = pos
         self._w, self._h = size
         self._rect = pygame.Rect(*pos,*size)
         self.img = load(imgpath, size)
@@ -115,9 +118,8 @@ class Sprite:
         return (self._x,self._y)
     @pos.setter
     def pos(self, pos):
-        if pos != self._pos:
-            self.rect.x,self.rect.y = pos
-            self._x, self._y = pos
+        self.rect.x,self.rect.y = pos
+        self._x, self._y = pos
         
     @property
     def size(self):
