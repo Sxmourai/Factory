@@ -2,7 +2,7 @@ from math import sin, cos, radians
 import pygame
 from typing import Optional, Union
 from time import time
-
+from pathlib import Path
 _game = []
 def set_game(game):
     _game.clear()
@@ -17,7 +17,9 @@ def get_surf():
 surf_width = lambda: _game[0].surf.get_width()
 surf_height = lambda: _game[0].surf.get_height()
 sysFont = lambda size: pygame.font.Font(None,size)
-path = lambda path: "C:\\Users\\Sxmourai\\Documents\\Projets\\Python - Factory\\img\\"+path
+PATH = str(Path(".").cwd())+"\\"
+path = lambda path: PATH+path
+imgpath = lambda path: PATH+"img\\"+path
 sc_center = lambda: (_game[0].surf.get_width()/2, _game[0].surf.get_height()/2)
 
 def all(array, val, empty=True):
@@ -63,9 +65,9 @@ def get_vec(hyp, orientation):
     rad = radians(orientation)
     return sin(rad)*hyp, cos(rad)*hyp
 
-def load(imgpath, size=None, multiplier:tuple=(1,1), tile:bool=False):
-    imgpath = path(imgpath)
-    img = pygame.image.load(imgpath)
+def load(img_path, size=None, multiplier:tuple=(1,1), tile:bool=False):
+    img_path = imgpath(img_path)
+    img = pygame.image.load(img_path)
     if size: 
         size = size[0]*multiplier[0], size[1]*multiplier[1]
         img = pygame.transform.scale(img, size)

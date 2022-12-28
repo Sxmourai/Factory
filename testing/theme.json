@@ -1,0 +1,22 @@
+{
+    "defaults":
+    {
+        "colours":
+        {
+            "normal_bg": "#f2f",
+            "hovered_bg": "#ff7a",
+            "disabled_bg": "rgb(200, 150, 60)",
+            "selected_bg": "rgba(20, 50, 89, 225)",
+            "dark_bg": "hsl(30, 0.6, 0.7)",
+            "normal_text": "hsla(3deg, 0.5, 0.7, 90%)",
+            "hovered_text": "#FFFFFF",
+            "selected_text": "purple",
+            "disabled_text": "RGB(40, 70, 90)",
+            "link_text": "HSV(50deg, 30%, 40%)",
+            "link_hover": "cmy(50%, 30%, 0.7)",
+            "link_selected": "teal",
+            "text_shadow": "skyblue",
+            "normal_border": "gold"
+        }
+    }
+}
