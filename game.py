@@ -8,13 +8,14 @@ import pygame
 from time import time
 from typing import Optional
 import pygame_gui
+from pygame_gui.core import IncrementalThreadedResourceLoader
 
 class Game:
     PLAYER_SIZE = (30,30)
     PLAYER_IMAGE = load("player.png", PLAYER_SIZE)
     def __init__(self, size, screen_size, ticks:Optional[int]=None):
         set_game(self)
-        self.manager = pygame_gui.UIManager(screen_size, path("theme.json"))
+        self.manager = pygame_gui.UIManager(screen_size, path("theme.json"), resource_loader=IncrementalThreadedResourceLoader())
         self.clock = (pygame.time.Clock(), ticks)
         self.surf = pygame.display.set_mode(screen_size)
         self.camera = Camera((0,0))

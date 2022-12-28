@@ -35,8 +35,6 @@ class Commands:
         self.add_button("hammer.png")
     def add_button(self, imgpath:str):
         button = UIButton(pygame.Rect(0,0,40,40), "", self.manager, self.panel)
-        img = load(imgpath, (40,40))
-        # button.set_image(img)
         self.commands[len(self.commands)+1] = button
         return button
     
