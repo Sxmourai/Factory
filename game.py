@@ -1,19 +1,20 @@
 from camera import Camera
 from world import Map
-from ressources import load, transform, sysFont, all, set_game
+from ressources import load, transform, sysFont, all, set_game, path
 from gui import Button
 from buildings import Factory, Core, Building
-from menu import Menu
+from menu import Commands, Stats
 import pygame
 from time import time
 from typing import Optional
-
+import pygame_gui
 
 class Game:
     PLAYER_SIZE = (30,30)
     PLAYER_IMAGE = load("player.png", PLAYER_SIZE)
     def __init__(self, size, screen_size, ticks:Optional[int]=None):
         set_game(self)
+        self.manager = pygame_gui.UIManager(screen_size, path("theme.json"))
         self.clock = (pygame.time.Clock(), ticks)
         self.surf = pygame.display.set_mode(screen_size)
         self.camera = Camera((0,0))
@@ -21,13 +22,12 @@ class Game:
         self.guis  = {}
         self.texts = {}
         self.buttons = []
-        self.menus = {(0,0): Menu((0,0), (300, 40), "gui_up.png")}
         self.construct_img = self.map.TILE_IMG_HOVER
         self._construct = None
         self._life = time()
         self._tick = 0
-        self._points = 10
-        self.menus[(0,0)].add_text(f"Points: {self._points}", (20,5), font_size=30, center=False)
+        self.stats = Stats()
+        self.commands = Commands()
 
     @property
     def life(self):
@@ -60,7 +60,6 @@ class Game:
 
     def draw(self):
         self.tick()
-        self.clock[0].tick(self.clock[1])
         self.map.draw()
         self.camera.render(self.PLAYER_IMAGE, self.screen_center())
         for gui in self.guis.values():
@@ -69,9 +68,8 @@ class Game:
             button.draw()
         for text, textRect in self.texts.values():
             self.camera.render_textRect(text, textRect)
-        for menu in self.menus.values():
-            menu.draw()
-        self.draw_points()
+        self.manager.update(self.clock[0].tick(self.clock[1])/1000.0)
+        self.manager.draw_ui(self.surf)
         pygame.display.flip()
         
     def screen_center(self):
@@ -105,16 +103,15 @@ class Game:
                 self.click(pygame.mouse.get_pos())
             elif event.type == pygame.MOUSEMOTION:
                 self.hover(pygame.mouse.get_pos())
+            
+            self.manager.process_events(event)
         return True
     @property
     def points(self):
-        return self._points
+        return self.stats._points
     @points.setter
     def points(self, points):
-        self._points = int(points)
-
-    def draw_points(self):
-        self.menus[(0,0)].change_text(f"Points: {self._points}", (20,5))
+        self.stats.set_points(points)
 
     def add_button(self, order, size):
         self.buttons.append(Button("button.png", order, size, self.map))

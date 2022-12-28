@@ -1,7 +1,6 @@
 """Module providing game core."""
 import pygame
 from game import Game
-from menu import Menu
 from ressources import rprint
 pygame.init()
 pygame.display.set_caption('Factory game')

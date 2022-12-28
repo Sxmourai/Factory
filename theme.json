@@ -1,0 +1,121 @@
+{
+    "defaults":
+    {
+        "colours":
+        {
+            "normal_bg":"#45494e",
+            "hovered_bg":"#35393e",
+            "disabled_bg":"#25292e",
+            "selected_bg":"#193754",
+            "dark_bg":"#15191e",
+            "normal_text":"#c5cbd8",
+            "hovered_text":"#FFFFFF",
+            "selected_text":"#FFFFFF",
+            "disabled_text":"#6d736f",
+            "link_text": "#0000EE",
+            "link_hover": "#2020FF",
+            "link_selected": "#551A8B",
+            "text_shadow": "#777777",
+            "normal_border": "#DDDDDD",
+            "hovered_border": "#B0B0B0",
+            "disabled_border": "#808080",
+            "selected_border": "#8080B0",
+            "active_border": "#8080B0",
+            "filled_bar":"#f4251b",
+            "unfilled_bar":"#CCCCCC"
+        }
+    },
+    "text_box":
+    {
+        "colours":
+        {
+            "dark_bg":"#45494e,#65696e,90deg",
+            "hovered_bg":"rgb(30, 40, 60),#f3f,rgb(50, 60, 70),90deg",
+            "gradient_text": "#ffad06, #ADff06, 0deg"
+        },
+        "misc":{
+            "border_width": "2",
+            "shape": "rounded_rectangle",
+            "shape_corner_radius":"9"
+        }
+    },
+    "label":
+    {
+        "colours":{
+            "dark_bg":"#ffa,#ffb,90deg",
+            "normal_text": "#AAA"
+        }
+    },
+    "panel":{
+        "misc":{
+            "border_width":"0",
+            "shape":"rounded_rectangle"
+        }
+    },
+    "button":
+    {
+        "colours":
+        {
+            "normal_bg": "#25292e",
+            "hovered_bg": "#35393e",
+            "disabled_bg": "#25292e",
+            "selected_bg": "#25292e",
+            "active_bg": "#193784",
+            "normal_text": "#c5cbd8",
+            "hovered_text": "#FFFFFF",
+            "selected_text": "#FFFFFF",
+            "disabled_text": "#6d736f",
+            "active_text": "#6d736f",
+            "normal_border": "#AAAAAA",
+            "hovered_border": "#B0B0B0",
+            "disabled_border": "#808080",
+            "selected_border": "#8080B0",
+            "active_border": "#8080B0",
+            "normal_text_shadow": "#10101070",
+            "hovered_text_shadow": "#10101070",
+            "disabled_text_shadow": "#10101070",
+            "selected_text_shadow": "#10101070",
+            "active_text_shadow": "#10101070"
+        },
+        "font":
+        {
+            "name": "montserrat",
+            "size": "12",
+            "bold": "0"
+        },
+        "images":
+        {
+            "normal_image": {
+                "path":"./img/hammer.png",
+                "sub_surface_rect": "0,0,32,32"
+            },
+            "hovered_image": {
+                "package": "img",
+                "resource": "hammer.png",
+                "sub_surface_rect": "32,0,32,32"
+            },
+            "selected_image": {
+                "package": "img",
+                "resource": "hammer.png",
+                "sub_surface_rect": "64,0,32,32"
+            }
+        },
+        "misc":
+        {
+            "border_width": "1",
+            "shadow_width": "1",
+            "tool_tip_delay": "1.0",
+            "text_horiz_alignment": "left",
+            "text_vert_alignment": "top",
+            "text_horiz_alignment_padding": "10",
+            "text_vert_alignment_padding": "5",
+            "text_shadow_size": "1",
+            "text_shadow_offset": "0,0",
+            "state_transitions":
+            {
+                "normal_hovered": "0.5",
+                "hovered_normal": "0.5"
+            }
+        }
+    }
+}
