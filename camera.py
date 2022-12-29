@@ -11,19 +11,19 @@ class Camera:
         self.x += vx
         self.y += vy
 
-    def render(self, img,pos_or_rect:Union[tuple, pygame.Rect], transform:Union[bool,tuple]=False):
+    def render(self, img,pos_or_rect:tuple[int]|pygame.Rect, transform:bool|tuple[bool]=False):
         w,h = img.get_size()
-        if type(pos_or_rect) == tuple:
+        if isinstance(pos_or_rect,tuple):
             x,y = pos_or_rect
         else:
             self.surf.blit(img, pos_or_rect)
             return
-        if transform == True:
+        if transform is True:
             x -= w/2
             y -= h/2
-        elif type(transform) == tuple:
-            if transform[0]==True: x -= w/2
-            if transform[1]==True: y -= h/2
+        elif isinstance(transform, tuple):
+            if transform[0] is True: x -= w/2
+            if transform[1] is True: y -= h/2
         self.surf.blit(img, pygame.Rect(x,y, w,h))
 
     def render_text(self, text, fontSize_or_pos:Union[int, tuple], pos:Optional[tuple]=None, color:tuple=(0,0,0), center:bool=True) -> tuple:
@@ -38,8 +38,8 @@ class Camera:
         Returns:
             tuple: returns text and his rect objects in a tuple
         """
-        if type(text) is pygame.Surface:
-            if type(fontSize_or_pos) is tuple:
+        if isinstance(text,pygame.Surface):
+            if isinstance(fontSize_or_pos,tuple):
                 textRect = text.get_rect()
                 pos = fontSize_or_pos
             else:

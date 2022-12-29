@@ -28,11 +28,11 @@ class Building(Sprite):
             self.constructed = True
 
 class Multiblock(Shape):
-    def __init__(self, imgspaths:list|str, pos:tuple[int|str], size:tuple[int]) -> None:
+    """Building larger than 1 tile"""
+    def __init__(self, imgspaths:list, pos:tuple[int|str], size:tuple[int]) -> None:
         """Multiblock class
-
         Args:
-            imgspaths (list | str): Paths to the images to use. String or 1 ele array if only one image path
+            imgspaths (list | str): Paths to the images to use. 1 ele array if only one image path
             pos (tuple[int | str]): Top left of the multiblock (IN TILE)
             size (tuple[int]): Size of multiblock (IN TILE)
         """
@@ -40,19 +40,53 @@ class Multiblock(Shape):
         size = size[0]*get_map().TW, size[1]*get_map().TH
         super().__init__(pos, size)
         self.imgs = [load(cpath, tile=True) for cpath in imgspaths]
-    def get_elements(self):
-        elements = [[self.single(x,y) for y in range(self.size[1])] for x in range(self.size[0])]
-        for x in range(self.size[0]):
-            elements.append()
-            for y in range(self.size[1]):
-                elements.append(self.single())
-        return elements
+        self.selves = [[self.single(x,y) for y in range(self.size[1])] for x in range(self.size[0])]
+
+    def single(self, x:int, y:int):
+        """Returns an block at the specified coordinates
+        Args:
+            x (int): X relative position of the block (0 for top)
+            y (int): Y relative position of the block (0 for left)
+        Returns:
+            _type_: Block
+        """
+        return Block(self.find_img(x,y), (x,y), self)
+    def find_img(self, pos_or_x:int|tuple[int], y:int=None) -> pygame.Surface:
+        """Finds right image to a pos
+        Args:
+            pos_or_x (int | tuple[int]): Position in tuple or x value
+            y (int, optional): Y position, optional if pos is tuple. Defaults to None.
+        Returns:
+            pygame.Surface: The image
+        """
+        if len(self.imgs) == 1:
+            return None
+        if y:
+            x,y = pos_or_x,y
+        else:x,y = pos_or_x
+        return self.imgs[x][y]
+
+
+class Block:
+    """Block class for multiblocks"""
+    def __init__(self, pos:tuple[int|str], multiblock:Multiblock, img_path:str=None, size:tuple[int]=(1,1)) -> None:
+        self.img = load(img_path, tile=True) if img_path else None
+        self.pos = pos
+        self.multi = multiblock
+        self.size = size
+    def draw(self) -> None:
+        """Draw block to surface"""
+        if self.img:
+            self.multi.camera.render(self.img, self.pos)
+
+
 
 class Core(Building):
     W,H = 2,2
     def __init__(self, pos):
         super().__init__("core.png", 100, pos)
         self.tier = 1
+
     def gui(self):
         return super().gui(CoreGui(self))
 
