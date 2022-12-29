@@ -17,10 +17,11 @@ I hope this game will interest you !
 
 To run this project type:
 
+Install the modules:
+```bash
+  pip install -r requirements.txt
+```
+Run the program !
 ```bash
   python main.py
-```
-You might need the following pip module(s):
-```bash
-  pip install pygame
 ```
