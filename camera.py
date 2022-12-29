@@ -10,6 +10,7 @@ class Camera:
         vx,vy = get_vec(speed, direction)
         self.x += vx
         self.y += vy
+
     def render(self, img,pos_or_rect:Union[tuple, pygame.Rect], transform:Union[bool,tuple]=False):
         w,h = img.get_size()
         if type(pos_or_rect) == tuple:

@@ -3,30 +3,33 @@ import pygame
 from typing import Optional, Union
 from time import time
 from pathlib import Path
+
+SCREEN_SIZE = (1000,800)
+
 _game = []
 def set_game(game):
     _game.clear()
     _game.append(game)
-def get_game():
-    return _game[0]
-def get_map():
-    return _game[0].map
-def get_surf():
-    return _game[0].surf
 
-surf_width = lambda: _game[0].surf.get_width()
-surf_height = lambda: _game[0].surf.get_height()
+get_game = lambda: _game[0]
+get_map = lambda: _game[0].map
+get_surf = lambda: _game[0].surf
+
+surf_width = lambda: SCREEN_SIZE[0]
+surf_height = lambda: SCREEN_SIZE[1]
+
 sysFont = lambda size: pygame.font.Font(None,size)
 PATH = str(Path(".").cwd())+"\\"
 path = lambda path: PATH+path
 imgpath = lambda path: PATH+"img\\"+path
-sc_center = lambda: (_game[0].surf.get_width()/2, _game[0].surf.get_height()/2)
+sc_center = lambda: (SCREEN_SIZE[0]/2, SCREEN_SIZE[1]/2)
 
 def all(array, val, empty=True):
     if len(array) == 0:return empty
     for value in array:
         if value != val: return False
     return True
+
 def transform(size:Union[tuple, int, float], transformer:(Optional[Union[int, float]])=None):
     """Function to center elements
     Args:

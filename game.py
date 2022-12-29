@@ -104,7 +104,8 @@ class Game:
                 self.click(pygame.mouse.get_pos())
             elif event.type == pygame.MOUSEMOTION:
                 self.hover(pygame.mouse.get_pos())
-            
+            elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+                self.commands.handleEvent(event)
             self.manager.process_events(event)
         return True
     @property

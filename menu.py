@@ -1,9 +1,13 @@
 from gui import Button
 from typing import Optional
-from ressources import Sprite,sysFont, get_game, load
+from ressources import Sprite,sysFont, get_game, load, surf_width, surf_height
 import pygame
 import pygame_gui
 from pygame_gui.elements import UILabel, UITextBox, UIButton, UIPanel
+
+gen = lambda w,h: pygame.Rect(surf_width()/2-w/2,surf_height()/2-h/2, w, h)
+CONTAINER = gen(400,400)
+BUTTONR = (50,50)
 
 class Stats:
     def __init__(self) -> None:
@@ -32,12 +36,43 @@ class Commands:
         self.panel.relative_right_margin = 0
         self.panel.relative_bottom_margin = 0
         self.commands = {} # order: button
-        self.add_button("hammer.png")
-    def add_button(self, imgpath:str):
+        self.add_button("hammer.png", self.construct_panel)
+        self.panels = []
+        self.c_gui = None
+    def add_button(self, imgpath:str, func):
         button = UIButton(pygame.Rect(0,0,40,40), "", self.manager, self.panel)
-        self.commands[len(self.commands)+1] = button
+        self.commands[len(self.commands)+1] = (button, func)
         return button
-    
+    def handleEvent(self, e):
+        for button, func in self.commands.values():
+            if e.ui_element == button:
+                func()
+    def construct_panel(self):
+        if self.c_gui == None:
+            self.c_gui = Construct_pan()
+        elif isinstance(self.c_gui, Construct_pan):
+            self.c_gui = None
+
+
+class Panel:
+    def __init__(self, imgpath:str, title:str, buttons:list=[]):
+        self.game = get_game()
+        self.manager = self.game.manager
+        self.img = load(imgpath, CONTAINER.size)
+        self._text = title
+        self.buttons = buttons
+        self.panel = UIPanel(CONTAINER, 1, self.manager)
+        self.panel.set_image(load(imgpath,CONTAINER.size))
+    def button(self, text):
+        button = UIButton(BUTTONR, text, self.manager, self.panel)
+        self.buttons.append(button)
+        return button
+
+class Construct_pan(Panel):
+    def __init__(self):
+        super().__init__("guis/construct.png", "Construct", [])
+
+
 # class Menu(Sprite):
 #     def __init__(self, pos: tuple | None, size: tuple, imgpath):
 #         super().__init__(pos, size, imgpath)
