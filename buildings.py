@@ -1,4 +1,4 @@
-from ressources import Sprite, load, get_map
+from ressources import Shape, Sprite, load, get_map
 from gui import Gui, FactoryGui, CoreGui
 import pygame
 from time import time
@@ -26,6 +26,27 @@ class Building(Sprite):
             self.map.set(pos, self, self.size)
             self.pos = pos
             self.constructed = True
+
+class Multiblock(Shape):
+    def __init__(self, imgspaths:list|str, pos:tuple[int|str], size:tuple[int]) -> None:
+        """Multiblock class
+
+        Args:
+            imgspaths (list | str): Paths to the images to use. String or 1 ele array if only one image path
+            pos (tuple[int | str]): Top left of the multiblock (IN TILE)
+            size (tuple[int]): Size of multiblock (IN TILE)
+        """
+        pos = pos[0]*get_map().TW, pos[1]*get_map().TH
+        size = size[0]*get_map().TW, size[1]*get_map().TH
+        super().__init__(pos, size)
+        self.imgs = [load(cpath, tile=True) for cpath in imgspaths]
+    def get_elements(self):
+        elements = [[self.single(x,y) for y in range(self.size[1])] for x in range(self.size[0])]
+        for x in range(self.size[0]):
+            elements.append()
+            for y in range(self.size[1]):
+                elements.append(self.single())
+        return elements
 
 class Core(Building):
     W,H = 2,2

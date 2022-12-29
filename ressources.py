@@ -78,20 +78,16 @@ def load(img_path, size=None, multiplier:tuple=(1,1), tile:bool=False):
         img = pygame.transform.scale(img, get_map().TILE_SIZE)
     return img
 
-
-class Sprite:
-    def __init__(self, pos:tuple|None, size:tuple, imgpath):
+class Shape:
+    def __init__(self, pos:tuple|None, size:tuple) -> None:
         if pos:
             self._x, self._y = pos
         self._w, self._h = size
         self._rect = pygame.Rect(*pos,*size)
-        self.img = load(imgpath, size)
         self.game = get_game()
         self.surf = self.game.surf
         self.camera = self.game.camera
         self.map = self.game.map
-    def draw_self(self):
-        self.camera.render(self.img, self.rect)
     @property
     def x(self):
         return self._x
@@ -145,3 +141,12 @@ class Sprite:
         if type(rect) == tuple:
             rect = pygame.Rect(*rect)
         self._rect = rect
+
+
+class Sprite(Shape):
+    def __init__(self, pos:tuple|None, size:tuple, imgpath):
+        super().__init__(pos,size)
+        self.img = load(imgpath, size)
+        
+    def draw_self(self):
+        self.camera.render(self.img, self.rect)
