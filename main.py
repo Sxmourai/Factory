@@ -1,14 +1,13 @@
 """Module providing game core."""
 import pygame
 from game import Game
-from ressources import rprint
 pygame.init()
 pygame.display.set_caption('Factory game')
 game = Game((100,100), (1000,700), ticks=60)
-running = True
-while running:
+RUNNING = True
+while RUNNING:
     game.draw()
-    game.handleKeys(pygame.key.get_pressed())
-    running = game.handleEvents(pygame.event.get())
+    game.handle_keys(pygame.key.get_pressed())
+    RUNNING = game.handle_events(pygame.event.get())
 
 pygame.quit()

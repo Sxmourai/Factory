@@ -81,14 +81,14 @@ class Block:
 
 
 
-class Core(Building):
+class Core(Multiblock):
     W,H = 2,2
     def __init__(self, pos):
-        super().__init__("core.png", 100, pos)
+        super().__init__(["core.png"], pos, (2,2))
         self.tier = 1
 
-    def gui(self):
-        return super().gui(CoreGui(self))
+    # def gui(self):
+    #     return super().gui(CoreGui(self))
 
 class Factory(Building):
     W = 1

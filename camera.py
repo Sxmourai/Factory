@@ -1,6 +1,5 @@
 from ressources import get_vec, sysFont, get_surf
 import pygame
-from typing import Optional, Union
 class Camera:
     def __init__(self, pos) -> None:
         self.x, self.y = pos
@@ -26,7 +25,7 @@ class Camera:
             if transform[1] is True: y -= h/2
         self.surf.blit(img, pygame.Rect(x,y, w,h))
 
-    def render_text(self, text, fontSize_or_pos:Union[int, tuple], pos:Optional[tuple]=None, color:tuple=(0,0,0), center:bool=True) -> tuple:
+    def render_text(self, text, fontSize_or_pos:int|tuple[int], pos:tuple[int,int]=None, color:tuple[int,int,int]=(0,0,0), center:bool=True) -> tuple:
         """Renders text on self.surf
 
         Args:
@@ -40,29 +39,74 @@ class Camera:
         """
         if isinstance(text,pygame.Surface):
             if isinstance(fontSize_or_pos,tuple):
-                textRect = text.get_rect()
+                text_rect = text.get_rect()
                 pos = fontSize_or_pos
             else:
                 print("Keep in mind fontSize isn't used")
-                textRect = text.get_rect()
+                text_rect = text.get_rect()
         else:
             text = sysFont(fontSize_or_pos).render(str(text), True, color)
-            textRect = text.get_rect()
+            text_rect = text.get_rect()
         if center:
-            textRect.center = pos
+            text_rect.center = pos
         else:
-            textRect.x, textRect.y = pos
-        self.surf.blit(text, textRect)
-        return (text, textRect)
-    def render_textRect(self, text:pygame.Surface, textRect:pygame.Rect):
-        self.surf.blit(text,textRect)
-    def collide(self, pos:tuple, size:tuple, point:tuple):
-        return self.get_rect(pos, size).collidepoint(point)
-    def get_rect(self, pos:tuple, size:tuple):
-        rect = pygame.Rect(0,0, *size)
-        rect.center = pos
+            text_rect.x, text_rect.y = pos
+        self.surf.blit(text, text_rect)
+        return (text, text_rect)
+    def render_text_rect(self, text:pygame.Surface,
+                               text_rect_or_pos:pygame.Rect|tuple[int,int],
+                               transform:bool=False):
+        """Renders text, with a text surface and his rect or generates it
+
+        Args:
+            text (pygame.Surface): Text surface
+            text_rect_or_pos (pygame.Rect | tuple[int,int]): Text rect or the position of the rect
+            transform (bool, optional): If text_rect_or_pos is pos then if it should center the position of the rect. Defaults to False.
+        """
+        if isinstance(text_rect_or_pos, pygame.Rect):
+            rect = text_rect_or_pos
+        else:
+            rect = pygame.Rect(*text_rect_or_pos, *text.get_size())
+        if transform:
+            rect.center = rect.x,rect.y
+        self.surf.blit(text,rect)
+
+    def collide(self, pos:tuple[int,int], size:tuple[int,int], point_pos:tuple[int, int], size2:tuple[int,int]=(1,1)) -> bool:
+        """Checks if two points collide (first points has a size)
+
+        Args:
+            pos (tuple[int,int]): Position of the first point
+            size (tuple[int,int]): Size of the first point
+            point_pos (tuple[int, int]): Position of the second point
+            size2 (tuple[int,int]): Size of the second point
+        Returns:
+            bool: If there is a collide between the points
+        """
+        rect1 = self.get_rect(pos, size)
+        if size2 != (1,1):
+            rect2 = pygame.Rect(*point_pos, *size2)
+            return rect1.colliderect(rect2)
+        return rect1.collidepoint(point_pos)
+    def get_rect(self, pos:tuple[int,int], size:tuple[int,int], transform:bool=True) -> pygame.Rect:
+        """Creates a rectangle at the position and size
+        Args:
+            pos (tuple[int,int]): Position of the rectangle
+            size (tuple[int,int]): Size of the rectangle
+
+        Returns:
+            pygame.Rect: Created rectangle
+        """
+        rect = pygame.Rect(*pos, *size)
+        if transform: 
+            rect.center = pos
         return rect
-    def center_rect(self, rect:pygame.Rect, pos:Optional[tuple]=None):
+    def center_rect(self, rect:pygame.Rect, pos:tuple[int,int]=None):
+        """Center a rectangle, at specified pos, or a transformation
+
+        Args:
+            rect (pygame.Rect): Rectangle to center
+            pos (tuple[int,int], optional): Position to center the rect. Defaults to his pos.
+        """
         if pos:
             rect.center = pos
         else:

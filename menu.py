@@ -13,7 +13,7 @@ class Stats:
     def __init__(self) -> None:
         self.game = get_game()
         self.manager = self.game.manager
-        self._points = 10
+        self._points = 1000
         self._research = 0
         self.container = UITextBox(self.content, pygame.Rect(-9,-9, 250, 40))
 

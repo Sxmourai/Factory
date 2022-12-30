@@ -1,19 +1,21 @@
+"""Getting time"""
+from time import time 
+import pygame
+import pygame_gui
+from pygame_gui.core import IncrementalThreadedResourceLoader
+
 from camera import Camera
 from world import Map
 from ressources import load, transform, sysFont, all, set_game, path
 from gui import Button
 from buildings import Factory, Core, Building
 from menu import Commands, Stats
-import pygame
-from time import time
-from typing import Optional
-import pygame_gui
-from pygame_gui.core import IncrementalThreadedResourceLoader
 
 class Game:
+    """Game object"""
     PLAYER_SIZE = (30,30)
     PLAYER_IMAGE = load("player.png", PLAYER_SIZE)
-    def __init__(self, size, screen_size, ticks:Optional[int]=None):
+    def __init__(self, size, screen_size, ticks:int=None):
         set_game(self)
         self.manager = pygame_gui.UIManager(screen_size, path("theme.json"), resource_loader=IncrementalThreadedResourceLoader())
         self.clock = (pygame.time.Clock(), ticks)
@@ -30,36 +32,57 @@ class Game:
         self.stats = Stats()
         self.commands = Commands()
 
-    @property
-    def life(self):
-        return time()-self._life
 
-    def construct(self, pos:tuple=(), building:Building=None):
+    def construct(self, pos:tuple[int]=None, building:Building=None):
+        """Construct a building at a position
+        Args:
+            pos (tuple[int]|None): Position in tiles of the building. Defaults to position of cursor (in tiles).
+            building (Building, optional): Build object, to construct. Defaults to self._construct (selected by user).
+        Returns:
+            _type_: False if couldn't construct the building
+        """
         pos = pos if len(pos) == 2 else self.map.tile_from_screen(rround=True)
         if building:
             building.construct(pos)
         elif self._construct:
             self._construct(pos)
         else:return False
+        return True
 
-    def construct_overlay(self, img_path_or_size:tuple | str | pygame.Surface, building:Optional[Building]=None):
-        if type(img_path_or_size) == tuple:
+    def construct_overlay(self, img_path_or_size:tuple[str,int] | str | pygame.Surface, building:Building=None):
+        """Draws a "hollow" of the building the user is trying to construct
+        Args:
+            img_path_or_size (tuple[str,int] | str | pygame.Surface): Img surface or string path or tuple with path and size 
+            building (Building): Building to draw. Defaults to None.
+        """
+        if isinstance(img_path_or_size,tuple[str,int]):
             self.construct_img = load(*img_path_or_size)
-        elif type(img_path_or_size) == pygame.Surface:
+        elif isinstance(img_path_or_size,pygame.Surface):
             self.construct_img = img_path_or_size
         else:
             self.construct_img = load(img_path_or_size, self.map.TILE_SIZE)
         if self.construct_img != self.map.TILE_IMG_HOVER: self.construct_img.set_alpha(125)
         self._construct = building
-    def handleConstruct(self):
-        if self._construct: self.construct()
+        
+    def handle_construct(self):
+        """Handles the construction"""
+        if self._construct:
+            self.construct()
 
-    def tick(self, need_set_tick:bool=True):
+    def tick(self, need_set_tick:bool=True) -> int:
+        """Sets the ticks elapsed since beginning of the game
+        Args:
+            need_set_tick (bool, optional): If the elapsed ticks should be updated. Defaults to True.
+
+        Returns:
+            _type_: Returns elapsed ticks (int)
+        """
         if need_set_tick:
-            self._tick = (pygame.time.get_ticks() - self._tick) / 10
+            self._tick = pygame.time.get_ticks()
         return self._tick
 
     def draw(self):
+        """Draws the elements of the game (tiles, player, buildings, menus etc)"""
         self.tick()
         self.map.draw()
         self.camera.render(self.PLAYER_IMAGE, self.screen_center())
@@ -67,17 +90,26 @@ class Game:
             gui.draw()
         for button in self.buttons:
             button.draw()
-        for text, textRect in self.texts.values():
-            self.camera.render_textRect(text, textRect)
+        for text, text_rect in self.texts.values():
+            self.camera.render_textRect(text, text_rect)
         self.manager.update(self.clock[0].tick(self.clock[1])/1000.0)
         self.manager.draw_ui(self.surf)
         pygame.display.flip()
-        
-    def screen_center(self):
+
+    def screen_center(self) -> tuple[int|float]:
+        """Returns a tuple with the coords of the screen's center
+        Returns:
+            tuple[int|float]: Coordinates of screen center
+        """
         return (self.surf.get_width()/2, self.surf.get_height()/2)
 
-    def handleKeys(self, keys):
+    def handle_keys(self, keys:dict):
+        """Handle keys for the game (player movement etc)
+        Args:
+            keys (dict): Keys pressed by player
+        """
         if keys:
+            print(type(keys), end="\r")
             if keys[pygame.K_UP]:
                 self.camera.move(180, keys[pygame.K_SPACE])
             if keys[pygame.K_DOWN]:
@@ -96,7 +128,7 @@ class Game:
                 else:
                     self.construct_overlay(self.map.TILE_IMG_HOVER)
 
-    def handleEvents(self, events):
+    def handle_events(self, events) -> bool:
         for event in events:
             if event.type == pygame.QUIT:
                 return False

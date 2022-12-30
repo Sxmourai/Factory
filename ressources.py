@@ -149,4 +149,5 @@ class Sprite(Shape):
         self.img = load(imgpath, size)
         
     def draw_self(self):
+        """Calls camera's render method"""
         self.camera.render(self.img, self.rect)
