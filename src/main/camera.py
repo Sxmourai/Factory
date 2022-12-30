@@ -1,5 +1,5 @@
 import pygame
-from ressources import get_vec, sysFont, get_surf
+from src.ressources import get_vec, sysFont, get_surf
 class Camera:
     """Camera object for game"""
     def __init__(self, pos:tuple[int,int]) -> None:

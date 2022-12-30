@@ -2,6 +2,15 @@ from math import sin, cos, radians
 from pathlib import Path
 import pygame
 #from time import time
+PATH = str(Path(".").cwd())+"\\"
+imgpath = lambda path: PATH+"img\\"+path
+SCALE = 100
+TILE_SIZE = (int(.3*SCALE), int(.3*SCALE))
+TW, TH = TILE_SIZE
+TILE_IMG = pygame.transform.scale(pygame.image.load(imgpath("tile.png")), TILE_SIZE)
+TILE_IMG_HOVER = pygame.transform.scale(pygame.image.load(imgpath("tile_selected.png")), TILE_SIZE)
+
+
 
 SCREEN_SIZE = (1000,800)
 
@@ -18,9 +27,7 @@ surf_width = lambda: SCREEN_SIZE[0]
 surf_height = lambda: SCREEN_SIZE[1]
 
 sysFont = lambda size: pygame.font.Font(None,size)
-PATH = str(Path(".").cwd())+"\\"
 path = lambda path: PATH+path
-imgpath = lambda path: PATH+"img\\"+path
 sc_center = lambda: (SCREEN_SIZE[0]/2, SCREEN_SIZE[1]/2)
 
 def is_all(array:list|tuple, val, empty:bool=True) -> bool:
@@ -94,7 +101,7 @@ def load(img_path:str, size:tuple[int,int]=None, multiplier:tuple[int,int]=(1,1)
         size = size[0]*multiplier[0], size[1]*multiplier[1]
         img = pygame.transform.scale(img, size)
     if tile:
-        img = pygame.transform.scale(img, get_map().TILE_SIZE)
+        img = pygame.transform.scale(img, TILE_SIZE)
     return img
 
 class Shape:

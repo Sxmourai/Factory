@@ -2,7 +2,7 @@ import pygame
 
 from pygame_gui.elements import UITextBox, UIButton, UIPanel
 
-from ressources import get_game, load, surf_width, surf_height
+from src.ressources import get_game, load, surf_width, surf_height
 
 def gen(width:int, height:int) -> pygame.Rect:
     """Creates a centered rect with width and height

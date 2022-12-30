@@ -4,12 +4,12 @@ import pygame
 import pygame_gui
 from pygame_gui.core import IncrementalThreadedResourceLoader
 
-from camera import Camera
-from world import Map
-from ressources import load, set_game, path
-from gui import Button
-from buildings import Factory, Core, Building
-from menu import Commands, Stats
+from src.main.camera import Camera
+from src.world.world import Map
+from src.ressources import load, set_game, path, TILE_IMG_HOVER
+from src.menus.gui import Button
+from src.world.buildings import Factory, Core, Building
+from src.menus.menu import Commands, Stats
 
 class Game:
     """Game object"""
@@ -25,7 +25,7 @@ class Game:
         self.guis  = {}
         self.texts = {}
         self.buttons = []
-        self.construct_img = self.map.TILE_IMG_HOVER
+        self.construct_img = TILE_IMG_HOVER
         self._construct = None
         self._life = time()
         self._tick = 0
@@ -50,14 +50,17 @@ class Game:
         else:return False
         return True
 
-    def construct_overlay(self, building:Building):
+    def construct_overlay(self, building:Building|pygame.Surface):
         """Draws a "hollow" of the building the user is trying to construct
         Args:
             building (Building): Building to draw. Defaults to None.
         """
-        self.construct_img = building.HOLLOW_IMG
-        self._construct = building
-        
+        if isinstance(building, pygame.Surface):
+            self.construct_img = TILE_IMG_HOVER
+            self._construct = None
+        else:
+            self.construct_img = building.hollow_img
+            self._construct = building
     def handle_construct(self):
         """Handles the construction"""
         if self._construct:
@@ -116,10 +119,10 @@ class Game:
             if keys[pygame.K_c]:
                 self.construct_overlay(Core)
             if keys[pygame.K_ESCAPE]:
-                if self.construct_img == self.map.TILE_IMG_HOVER:
+                if self.construct_img == TILE_IMG_HOVER:
                     self.guis = {}
                 else:
-                    self.construct_overlay(self.map.TILE_IMG_HOVER)
+                    self.construct_overlay(TILE_IMG_HOVER)
 
     def handle_events(self, events) -> bool:
         """Handle pygame's events"""

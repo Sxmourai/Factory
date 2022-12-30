@@ -1,5 +1,5 @@
 from typing import Optional
-from ressources import load, sysFont, Sprite, sc_center, surf_width, surf_height
+from src.ressources import load, sysFont, Sprite, sc_center, surf_width, surf_height
 import pygame
 
 
@@ -45,7 +45,7 @@ class FactoryGui(Gui):
     def __init__(self, factory) -> None:
         super().__init__("gui.png", sysFont(30), f"Tier {factory.gen}")
         self.add_button("retrieve", "Retrieve", (150,40), onClick=factory.retrieve)
-        self.add_button("upgrade", f"Upgrade ({factory.cost})", (150,40), onClick=factory.upgrade)
+        self.add_button("upgrade", f"Upgrade ({factory.COST})", (150,40), onClick=factory.upgrade)
         self.factory = factory
 
 class CoreGui(Gui):

@@ -1,6 +1,6 @@
 """Module providing game core."""
 import pygame
-from game import Game
+from src.main.game import Game
 pygame.init()
 pygame.display.set_caption('Factory game')
 game = Game((100,100), (1000,700), ticks=60)
