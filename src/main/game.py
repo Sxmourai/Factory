@@ -31,8 +31,15 @@ class Game:
         self._tick = 0
         self.stats = Stats()
         self.commands = Commands()
+        self._multiplier = 1
         ConstructMenu()
 
+    @property
+    def multiplier(self):
+        return self._multiplier
+    @multiplier.setter
+    def multiplier(self, new_multiplier):
+        self._multiplier = new_multiplier
 
     def construct(self, pos:tuple[int,int]=None, building:Building=None) -> bool:
         """Construct a building at a position

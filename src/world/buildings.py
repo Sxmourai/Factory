@@ -9,6 +9,8 @@ class Building(Sprite):
     H = 1
     IMG_PATH = ""
     COST = 10
+    TITLE = "Sample"
+    DESCRIPTION = "Sample building to create others"
     def __init__(self, pos:tuple=()):
         super().__init__(pos, (self.W*TW, self.H*TH), self.IMG_PATH)
         if len(pos) == 2:
@@ -29,6 +31,8 @@ class Core(Building):
     IMG_PATH = "core.png"
     hollow_img = load(IMG_PATH, tile=True)
     hollow_img.set_alpha(125)
+    TITLE = "Core"
+    DESCRIPTION = "The core doesn't have a use for now... Sorry"
     def __init__(self, pos):
         super().__init__(pos)
         # self._gui = CoreGui(self)
@@ -43,6 +47,8 @@ class Factory(Building):
     IMG_PATH = "factory.png"
     hollow_img = load(IMG_PATH, tile=True)
     hollow_img.set_alpha(125)
+    TITLE = "Factory"
+    DESCRIPTION = "The factory produces points that you can use in the shop."
     def __init__(self, pos, tier=1):
         super().__init__(pos)
         self.buffer = 0
@@ -79,7 +85,7 @@ class Factory(Building):
         return 0
     def retrieve(self):
         delta = time()-self.last
-        points = self.gen * delta
+        points = self.gen * delta * self.game.multiplier
         if points >= 1:
             self.game.stats.points += points
             self.last = time()
@@ -95,17 +101,20 @@ class Factory(Building):
         for ball in self.balls:
             ball.move()
 
-
-# class Ball(Sprite):
-#     height = .25
-#     width = .25
-#     def __init__(self, pos, speed, game):
-#         super().__init__("ball.png", pos, game, (self.width,self.height))
-#         self.vx, self.vy = speed
-#         self.x, self.y = pos
-#     def move(self):
-#         self.x += self.vx
-#         self.y += self.vy
-
-
-
+class Generator(Building):
+    IMG_PATH = "generator.png"
+    COST = 500
+    hollow_img = load(IMG_PATH, tile=True)
+    hollow_img.set_alpha(125)
+    TITLE = "Generator"
+    DESCRIPTION = "The generator boosts the production of the factory."
+    def __init__(self, pos: tuple = ()):
+        super().__init__(pos)
+        self._tier = 1
+        self.game.multiplier += self.tier
+    @property
+    def tier(self):
+        return self._tier
+    @tier.setter
+    def tier(self, new_tier):
+        self._tier = new_tier

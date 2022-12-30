@@ -57,10 +57,10 @@ class Commands:
         self.panel.relative_right_margin = 0
         self.panel.relative_bottom_margin = 0
         self.commands = [] # order: button
-        self.add_button("hammer.png", self.construct_panel)
+        self.construct_menu = ConstructMenu()
+        self.add_button("hammer.png", self.construct_menu.toggle)
         self.panels = []
         self.c_gui = None
-        self.construct_panell = ConstructMenu()
     def add_button(self, img_path:str, func) -> UIButton:
         """Creates a Button on the menu
 
@@ -78,17 +78,13 @@ class Commands:
         return button
     def handle_event(self, event):
         """Handle a click event for the UIButtons
-
         Args:
             event (_type_): Click event
         """
-        print(self.commands)
         for i,packer in enumerate(self.commands):
             button, func = packer
             func()
-        self.construct_panell.handle_event(event)
-        if event.ui_element == self.commands[0]:
-            self.construct_panell.toggle()
+        self.construct_menu.handle_event(event)
 
     def construct_panel(self):
         """Opens the construct panel"""

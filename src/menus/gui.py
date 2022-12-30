@@ -5,7 +5,7 @@ from pygame_gui.elements import UIPanel, UIButton, UILabel, UITextBox, UIWindow,
 from pygame_gui.ui_manager import UIContainer
 import pygame
 
-from src.world.buildings import Core, Factory
+from src.world.buildings import Core, Factory, Generator
 
 class Menu:
     def __init__(self) -> None:
@@ -42,16 +42,20 @@ class Menu:
         return button_container
     def handle_event(self, event):
         for button,func,args in self.buttons:
-            if event.ui_element == button:
+            if event.ui_element == button.button:
                 func(*args)
 
 class ConstructMenu(Menu):
     def __init__(self) -> None:
         super().__init__()
-        self.button("factory.png", "Factory", "The factory produces points that you can use in the shop.", get_game().construct_overlay, Factory)
-        self.button("core.png", "Core", "The core doesn't have a use for now... Sorry", get_game().construct_overlay, Core)
+        self.game = get_game()
         UILabel(pygame.Rect(5,5,-1,-1), "Construction menu",self.manager, self.panel)
-
+        buildings = [Factory, Core, Generator]
+        for building in buildings:
+            self.add_building(building)
+    def add_building(self, building):
+        self.button(building.IMG_PATH, building.TITLE,
+                    building.DESCRIPTION, self.game.construct_overlay, building)
 
 
 # class Gui(Sprite):
