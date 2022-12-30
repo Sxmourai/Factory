@@ -1,8 +1,7 @@
 from math import sin, cos, radians
-import pygame
-from typing import Optional, Union
-from time import time
 from pathlib import Path
+import pygame
+#from time import time
 
 SCREEN_SIZE = (1000,800)
 
@@ -24,13 +23,23 @@ path = lambda path: PATH+path
 imgpath = lambda path: PATH+"img\\"+path
 sc_center = lambda: (SCREEN_SIZE[0]/2, SCREEN_SIZE[1]/2)
 
-def all(array, val, empty=True):
-    if len(array) == 0:return empty
+def is_all(array:list|tuple, val, empty:bool=True) -> bool:
+    """Check if all of the array is a certain value
+    Args:
+        array (list | tuple): List in question
+        val (_type_): Value to check
+        empty (bool, optional): Boolean value to return if the array is empty. Defaults to True.
+    Returns:
+        bool: True if all of the array is val else False or empty
+    """
+    if len(array) == 0:
+        return empty
     for value in array:
-        if value != val: return False
+        if value != val:
+            return False
     return True
 
-def transform(size:Union[tuple, int, float], transformer:(Optional[Union[int, float]])=None):
+def transform(size:tuple[int,int]|int|float, transformer:int|float=None):
     """Function to center elements
     Args:
         size (Union[tuple, int, float]): Takes a size or int if only one parameter
@@ -40,7 +49,7 @@ def transform(size:Union[tuple, int, float], transformer:(Optional[Union[int, fl
         _type_: int/float if size/float int or tuple if size tuple
     """
     if type(size) in (int,float):
-        if transformer != None:
+        if transformer is not None:
             return size - transformer/2
         else:
             return size - size/2
@@ -48,7 +57,6 @@ def transform(size:Union[tuple, int, float], transformer:(Optional[Union[int, fl
 
 def rprint(*args, fill:bool=False, **kwargs):
     """Print with \r
-
     Args:
         fill (bool, optional): Adds 10 spaces-length to have better results. Defaults to False.
     """
@@ -68,17 +76,29 @@ def get_vec(hyp, orientation):
     rad = radians(orientation)
     return sin(rad)*hyp, cos(rad)*hyp
 
-def load(img_path, size=None, multiplier:tuple=(1,1), tile:bool=False):
+def load(img_path:str, size:tuple[int,int]=None, multiplier:tuple[int,int]=(1,1), tile:bool=False) -> pygame.Surface:
+    """Loads an image
+
+    Args:
+        img_path (str): Path to the image
+        size (tuple[int,int], optional): Size of the image. Defaults to None.
+        multiplier (tuple[int,int], optional): Multiplier for the size. Defaults to (1,1).
+        tile (bool, optional): If it's a tile (specially for Game). Defaults to False.
+
+    Returns:
+        pygame.Surface: Loaded image
+    """
     img_path = imgpath(img_path)
     img = pygame.image.load(img_path)
-    if size: 
+    if size:
         size = size[0]*multiplier[0], size[1]*multiplier[1]
         img = pygame.transform.scale(img, size)
-    if tile: 
+    if tile:
         img = pygame.transform.scale(img, get_map().TILE_SIZE)
     return img
 
 class Shape:
+    """Shape object, with different properties"""
     def __init__(self, pos:tuple|None, size:tuple) -> None:
         if pos:
             self._x, self._y = pos
@@ -144,10 +164,13 @@ class Shape:
 
 
 class Sprite(Shape):
-    def __init__(self, pos:tuple|None, size:tuple, imgpath):
+    """Shape with images"""
+    def __init__(self, pos:tuple[int,int]|None, size:tuple[int,int], img_or_path:str|pygame.Surface):
         super().__init__(pos,size)
-        self.img = load(imgpath, size)
-        
+        if isinstance(img_or_path, str):
+            self.img = load(img_or_path, size)
+        else: self.img = img_or_path
+
     def draw_self(self):
         """Calls camera's render method"""
         self.camera.render(self.img, self.rect)

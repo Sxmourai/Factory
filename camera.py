@@ -1,16 +1,30 @@
-from ressources import get_vec, sysFont, get_surf
 import pygame
+from ressources import get_vec, sysFont, get_surf
 class Camera:
-    def __init__(self, pos) -> None:
+    """Camera object for game"""
+    def __init__(self, pos:tuple[int,int]) -> None:
         self.x, self.y = pos
         self.surf = get_surf()
-    def move(self, direction, sprint):
-        speed = 3*2 if sprint else 3
-        vx,vy = get_vec(speed, direction)
-        self.x += vx
-        self.y += vy
+    def move(self, direction:int|float, sprint:bool=False):
+        """Moves the camera, in a direction, and if it should sprint
 
-    def render(self, img,pos_or_rect:tuple[int]|pygame.Rect, transform:bool|tuple[bool]=False):
+        Args:
+            direction (int|float): Direction to move the camera (angle)
+            sprint (bool): If it should sprint (double speed)
+        """
+        speed = 3*2 if sprint else 3
+        velo_x,velo_y = get_vec(speed, direction)
+        self.x += velo_x
+        self.y += velo_y
+
+    def render(self, img:pygame.Surface,pos_or_rect:tuple[int,int]|pygame.Rect, transform:bool|tuple[bool,bool]=False):
+        """Renders an image at specified coordinates or rect
+
+        Args:
+            img (pygame.Surface): Image to render
+            pos_or_rect (tuple[int,int] | pygame.Rect): Position of rectangle or rect object
+            transform (bool | tuple[bool,bool], optional): If it should center the image, tuple to select axis. Defaults to False.
+        """
         w,h = img.get_size()
         if isinstance(pos_or_rect,tuple):
             x,y = pos_or_rect
@@ -25,7 +39,11 @@ class Camera:
             if transform[1] is True: y -= h/2
         self.surf.blit(img, pygame.Rect(x,y, w,h))
 
-    def render_text(self, text, fontSize_or_pos:int|tuple[int], pos:tuple[int,int]=None, color:tuple[int,int,int]=(0,0,0), center:bool=True) -> tuple:
+    def render_text(self, text,
+                          font_size_or_pos:int|tuple[int],
+                          pos:tuple[int,int]=None,
+                          color:tuple[int,int,int]=(0,0,0),
+                          center:bool=True) -> tuple:
         """Renders text on self.surf
 
         Args:
@@ -38,14 +56,14 @@ class Camera:
             tuple: returns text and his rect objects in a tuple
         """
         if isinstance(text,pygame.Surface):
-            if isinstance(fontSize_or_pos,tuple):
+            if isinstance(font_size_or_pos,tuple):
                 text_rect = text.get_rect()
-                pos = fontSize_or_pos
+                pos = font_size_or_pos
             else:
                 print("Keep in mind fontSize isn't used")
                 text_rect = text.get_rect()
         else:
-            text = sysFont(fontSize_or_pos).render(str(text), True, color)
+            text = sysFont(font_size_or_pos).render(str(text), True, color)
             text_rect = text.get_rect()
         if center:
             text_rect.center = pos

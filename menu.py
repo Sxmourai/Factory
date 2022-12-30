@@ -1,15 +1,25 @@
-from gui import Button
-from typing import Optional
-from ressources import Sprite,sysFont, get_game, load, surf_width, surf_height
 import pygame
-import pygame_gui
-from pygame_gui.elements import UILabel, UITextBox, UIButton, UIPanel
 
-gen = lambda w,h: pygame.Rect(surf_width()/2-w/2,surf_height()/2-h/2, w, h)
+from pygame_gui.elements import UITextBox, UIButton, UIPanel
+
+from ressources import get_game, load, surf_width, surf_height
+
+def gen(width:int, height:int) -> pygame.Rect:
+    """Creates a centered rect with width and height
+
+    Args:
+        width (int): Width of rect
+        height (int): Height of rect
+
+    Returns:
+        pygame.Rect: Centered rectangle
+    """
+    return pygame.Rect(surf_width()/2-width/2,surf_height()/2-height/2, width, height)
 CONTAINER = gen(400,400)
 BUTTONR = (50,50)
 
 class Stats:
+    """Stats menu"""
     def __init__(self) -> None:
         self.game = get_game()
         self.manager = self.game.manager
@@ -17,18 +27,41 @@ class Stats:
         self._research = 0
         self.container = UITextBox(self.content, pygame.Rect(-9,-9, 250, 40))
 
-    def set_research(self, amount:int|float):
+    @property
+    def research(self) -> int|float:
+        """Returns amount of research points
+        Returns:
+            int: Amount of research
+        """
+        return self._research
+    @research.setter
+    def research(self, amount:int|float):
+        """Sets research amount
+        Args:
+            amount (int | float): Amount to set to researchs
+        """
         self._research = amount
         self.container.set_text(self.content)
-    def set_points(self, amount:int|float):
+
+    @property
+    def points(self) -> int|float:
+        """Returns amount of points"""
+        return self._points
+    @points.setter
+    def points(self, amount:int|float):
+        """Sets amount of points"""
         self._points = amount
         self.container.set_text(self.content)
     @property
     def content(self):
+        """Returns:
+            str: Text to render stats
+        """
         return f"Points: {int(self._points)}  Research: {int(self._research)}"
 
 
 class Commands:
+    """Commands menu"""
     def __init__(self) -> None:
         self.game = get_game()
         self.manager = self.game.manager
@@ -39,38 +72,66 @@ class Commands:
         self.add_button("hammer.png", self.construct_panel)
         self.panels = []
         self.c_gui = None
-    def add_button(self, imgpath:str, func):
+    def add_button(self, img_path:str, func) -> UIButton:
+        """Creates a Button on the menu
+
+        Args:
+            img_path (str): Path to the logo of the button
+            func (function): Function to execute on the click of the button
+
+        Returns:
+            UIButton: Button object (set into self.commands[-1][0])
+        """
+        if img_path:
+            pass#print("Useless for now")
         button = UIButton(pygame.Rect(0,0,40,40), "", self.manager, self.panel)
         self.commands[len(self.commands)+1] = (button, func)
         return button
-    def handleEvent(self, e):
+    def handle_event(self, event):
+        """Handle a click event for the UIButtons
+
+        Args:
+            event (_type_): Click event
+        """
+        print(type(event))
         for button, func in self.commands.values():
-            if e.ui_element == button:
+            if event.ui_element == button:
                 func()
     def construct_panel(self):
-        if self.c_gui == None:
-            self.c_gui = Construct_pan()
-        elif isinstance(self.c_gui, Construct_pan):
+        """Opens the construct panel"""
+        if self.c_gui is None:
+            self.c_gui = ConstructPan()
+        elif isinstance(self.c_gui, ConstructPan):
             self.c_gui = None
 
 
 class Panel:
-    def __init__(self, imgpath:str, title:str, buttons:list=[]):
+    """Panel object, used by the menus"""
+    def __init__(self, imgpath:str, title:str):
         self.game = get_game()
         self.manager = self.game.manager
         self.img = load(imgpath, CONTAINER.size)
         self._text = title
-        self.buttons = buttons
+        self.buttons = []
         self.panel = UIPanel(CONTAINER, 1, self.manager)
         self.panel.set_image(load(imgpath,CONTAINER.size))
-    def button(self, text):
+    def button(self, text:str) -> UIButton:
+        """Adds a UIButton to the panel
+
+        Args:
+            text (str): Text of the button
+
+        Returns:
+            UIButton: _description_
+        """
         button = UIButton(BUTTONR, text, self.manager, self.panel)
         self.buttons.append(button)
         return button
 
-class Construct_pan(Panel):
+class ConstructPan(Panel):
+    """Derived panel"""
     def __init__(self):
-        super().__init__("guis/construct.png", "Construct", [])
+        super().__init__("guis/construct.png", "Construct")
 
 
 # class Menu(Sprite):
