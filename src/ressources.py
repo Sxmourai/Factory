@@ -2,8 +2,8 @@ from math import sin, cos, radians
 from pathlib import Path
 import pygame
 #from time import time
-PATH = str(Path(".").cwd())+"\\"
-imgpath = lambda path: PATH+"img\\"+path
+PATH = str(Path(".").cwd())+"\\src\\"
+imgpath = lambda path: PATH+"data\\img\\"+path
 SCALE = 100
 TILE_SIZE = (int(.3*SCALE), int(.3*SCALE))
 TW, TH = TILE_SIZE
@@ -22,6 +22,7 @@ def set_game(game):
 get_game = lambda: _game[0]
 get_map = lambda: _game[0].map
 get_surf = lambda: _game[0].surf
+get_manager = lambda: _game[0].manager
 
 surf_width = lambda: SCREEN_SIZE[0]
 surf_height = lambda: SCREEN_SIZE[1]
@@ -29,6 +30,19 @@ surf_height = lambda: SCREEN_SIZE[1]
 sysFont = lambda size: pygame.font.Font(None,size)
 path = lambda path: PATH+path
 sc_center = lambda: (SCREEN_SIZE[0]/2, SCREEN_SIZE[1]/2)
+
+
+def gen(width:int, height:int) -> pygame.Rect:
+    """Creates a centered rect with width and height
+
+    Args:
+        width (int): Width of rect
+        height (int): Height of rect
+
+    Returns:
+        pygame.Rect: Centered rectangle
+    """
+    return pygame.Rect(surf_width()/2-width/2,surf_height()/2-height/2, width, height)
 
 def is_all(array:list|tuple, val, empty:bool=True) -> bool:
     """Check if all of the array is a certain value

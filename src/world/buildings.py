@@ -1,5 +1,5 @@
-from src.ressources import Shape, Sprite, load, TW, TH
-from src.menus.gui import FactoryGui
+from src.ressources import Sprite, load, TW, TH
+# from src.menus.gui import FactoryGui, CoreGui
 import pygame
 from time import time
 
@@ -13,15 +13,10 @@ class Building(Sprite):
         super().__init__(pos, (self.W*TW, self.H*TH), self.IMG_PATH)
         if len(pos) == 2:
             self.construct(pos)
-        self._gui_state = False
         self._gui = None
     def toggle_click(self):
-        if self._gui_state == True: self._gui_state = False
-        else: self._gui_state = True
-        return self._gui_state
-    def _add_gui(self, gui):
-        self._gui = gui
-        return gui
+        self._gui.toggle_click()
+
     def construct(self, pos=None):
         if self.game.buyable(self.COST, buy_possible=True):
             pos = pos if pos else self.pos
@@ -36,6 +31,7 @@ class Core(Building):
     hollow_img.set_alpha(125)
     def __init__(self, pos):
         super().__init__(pos)
+        # self._gui = CoreGui(self)
         self.tier = 1
 
     # def gui(self):
@@ -56,8 +52,7 @@ class Factory(Building):
         self.balls = []
         self.last = time()
         self.COST = 10*self.gen
-    def gui(self):
-        return super()._add_gui(FactoryGui(self))
+        # self._gui = FactoryGui(self)
     def output(self):
         delta = time()-self.last
         points = self.gen * delta

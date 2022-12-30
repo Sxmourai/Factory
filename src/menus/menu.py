@@ -1,20 +1,8 @@
 import pygame
-
 from pygame_gui.elements import UITextBox, UIButton, UIPanel
+from src.menus.gui import ConstructMenu
+from src.ressources import get_game, load, gen
 
-from src.ressources import get_game, load, surf_width, surf_height
-
-def gen(width:int, height:int) -> pygame.Rect:
-    """Creates a centered rect with width and height
-
-    Args:
-        width (int): Width of rect
-        height (int): Height of rect
-
-    Returns:
-        pygame.Rect: Centered rectangle
-    """
-    return pygame.Rect(surf_width()/2-width/2,surf_height()/2-height/2, width, height)
 CONTAINER = gen(400,400)
 BUTTONR = (50,50)
 
@@ -68,10 +56,11 @@ class Commands:
         self.panel = UIPanel(pygame.Rect(0, 200, 40, 300), 0, self.manager)
         self.panel.relative_right_margin = 0
         self.panel.relative_bottom_margin = 0
-        self.commands = {} # order: button
+        self.commands = [] # order: button
         self.add_button("hammer.png", self.construct_panel)
         self.panels = []
         self.c_gui = None
+        self.construct_panell = ConstructMenu()
     def add_button(self, img_path:str, func) -> UIButton:
         """Creates a Button on the menu
 
@@ -85,7 +74,7 @@ class Commands:
         if img_path:
             pass#print("Useless for now")
         button = UIButton(pygame.Rect(0,0,40,40), "", self.manager, self.panel)
-        self.commands[len(self.commands)+1] = (button, func)
+        self.commands.append((button, func))
         return button
     def handle_event(self, event):
         """Handle a click event for the UIButtons
@@ -93,10 +82,14 @@ class Commands:
         Args:
             event (_type_): Click event
         """
-        print(type(event))
-        for button, func in self.commands.values():
-            if event.ui_element == button:
-                func()
+        print(self.commands)
+        for i,packer in enumerate(self.commands):
+            button, func = packer
+            func()
+        self.construct_panell.handle_event(event)
+        if event.ui_element == self.commands[0]:
+            self.construct_panell.toggle()
+
     def construct_panel(self):
         """Opens the construct panel"""
         if self.c_gui is None:

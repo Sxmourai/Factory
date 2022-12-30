@@ -7,7 +7,7 @@ from pygame_gui.core import IncrementalThreadedResourceLoader
 from src.main.camera import Camera
 from src.world.world import Map
 from src.ressources import load, set_game, path, TILE_IMG_HOVER
-from src.menus.gui import Button
+from src.menus.gui import ConstructMenu
 from src.world.buildings import Factory, Core, Building
 from src.menus.menu import Commands, Stats
 
@@ -17,7 +17,7 @@ class Game:
     PLAYER_IMAGE = load("player.png", PLAYER_SIZE)
     def __init__(self, size, screen_size, ticks:int=None):
         set_game(self)
-        self.manager = pygame_gui.UIManager(screen_size, path("theme.json"), resource_loader=IncrementalThreadedResourceLoader())
+        self.manager = pygame_gui.UIManager(screen_size, path("data/themes/theme.json"), resource_loader=IncrementalThreadedResourceLoader())
         self.clock = (pygame.time.Clock(), ticks)
         self.surf = pygame.display.set_mode(screen_size)
         self.camera = Camera((0,0))
@@ -31,6 +31,7 @@ class Game:
         self._tick = 0
         self.stats = Stats()
         self.commands = Commands()
+        ConstructMenu()
 
 
     def construct(self, pos:tuple[int,int]=None, building:Building=None) -> bool:

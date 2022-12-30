@@ -1,7 +1,6 @@
 from src.ressources import load, transform,rprint, get_game, TW, TH, TILE_SIZE, TILE_IMG, TILE_IMG_HOVER
 
 from src.world.buildings import Factory
-from src.menus.gui import FactoryGui
 import pygame
 
 class Map:

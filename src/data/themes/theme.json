@@ -1,12 +1,16 @@
 {
-    "button":
-    {
-        "images":
-        {
-            "normal_image": {
-                "package": "img.commands",
-                "resource":"hammer.png"
-            }
+    "defaults":{
+        "misc":{
+            "border_width": "5"
+        }
+    },
+    "text_box":{
+        "colours":{
+            "dark_bg":"#fff0"
+        },
+        "misc":{
+            "border_width":"0",
+            "shadow_width":"0"
         }
     }
 }
