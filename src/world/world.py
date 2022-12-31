@@ -27,7 +27,7 @@ class Map:
             if type(build) is Factory:
                 build.draw()
         self.hover(pygame.mouse.get_pos())
-        self.camera.render(self.game.construct_img, self.last_rect)
+        self.camera.render(self.game.event_controller.construct_img, self.last_rect)
 
     def in_tile(self, pos,y=None, rround:bool=False):
         if type(y) in (int,float): pos = pos,y

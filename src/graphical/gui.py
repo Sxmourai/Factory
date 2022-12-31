@@ -1,4 +1,4 @@
-from src.menus.graphical import ButtonImage
+from src.graphical.graphical import ButtonImage
 from src.ressources import get_manager, sc_center, surf_width, surf_height, get_game
 import pygame_gui
 from pygame_gui.elements import UIPanel, UIButton, UILabel, UITextBox, UIWindow, UIImage
@@ -50,13 +50,16 @@ class ConstructMenu(Menu):
         super().__init__()
         self.game = get_game()
         UILabel(pygame.Rect(5,5,-1,-1), "Construction menu",self.manager, self.panel)
-        buildings = [Factory, Core, Generator]
-        for building in buildings:
-            self.add_building(building)
+        
     def add_building(self, building):
         self.button(building.IMG_PATH, building.TITLE,
-                    building.DESCRIPTION, self.game.construct_overlay, building)
-
+                    building.DESCRIPTION, self.game.event_controller.construct_overlay, building)
+    def toggle(self):
+        if len(self.buttons) == 0:
+            buildings = [Factory, Core, Generator]
+            for building in buildings:
+                self.add_building(building)
+        super().toggle()
 
 # class Gui(Sprite):
 #     def __init__(self, imgpath, font, title, size=None) -> None:

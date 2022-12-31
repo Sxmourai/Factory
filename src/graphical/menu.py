@@ -1,6 +1,6 @@
 import pygame
 from pygame_gui.elements import UITextBox, UIButton, UIPanel
-from src.menus.gui import ConstructMenu
+from src.graphical.gui import ConstructMenu
 from src.ressources import get_game, load, gen
 
 CONTAINER = gen(400,400)
@@ -14,6 +14,7 @@ class Stats:
         self._points = 1000
         self._research = 0
         self.container = UITextBox(self.content, pygame.Rect(-9,-9, 250, 40))
+        self.game.camera.menus.append(self)
 
     @property
     def research(self) -> int|float:
@@ -42,9 +43,7 @@ class Stats:
         self.container.set_text(self.content)
     @property
     def content(self):
-        """Returns:
-            str: Text to render stats
-        """
+        """Returns: str, the text to render stats"""
         return f"Points: {int(self._points)}  Research: {int(self._research)}"
 
 

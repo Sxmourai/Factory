@@ -1,6 +1,7 @@
-from src.ressources import Sprite, load, TW, TH
-# from src.menus.gui import FactoryGui, CoreGui
+from src.ressources import Sprite, load, TW, TH, sc_center, surf_width, surf_height
+# from src.graphical.gui import FactoryGui, CoreGui
 import pygame
+from pygame_gui.elements import UIButton, UILabel, UIImage, UIPanel
 from time import time
 
 class Building(Sprite):
@@ -15,12 +16,9 @@ class Building(Sprite):
         super().__init__(pos, (self.W*TW, self.H*TH), self.IMG_PATH)
         if len(pos) == 2:
             self.construct(pos)
-        self._gui = None
-    def toggle_click(self):
-        self._gui.toggle_click()
 
     def construct(self, pos=None):
-        if self.game.buyable(self.COST, buy_possible=True):
+        if self.game.menu_controller.buyable(self.COST, buy_possible=True):
             pos = pos if pos else self.pos
             self.map.set(pos, self, self.size)
             self.pos = pos
@@ -35,8 +33,8 @@ class Core(Building):
     DESCRIPTION = "The core doesn't have a use for now... Sorry"
     def __init__(self, pos):
         super().__init__(pos)
-        # self._gui = CoreGui(self)
         self.tier = 1
+        self.menu = CoreMenu(self)
 
     # def gui(self):
     #     return super()._add_gui(CoreGui(self))
@@ -58,7 +56,7 @@ class Factory(Building):
         self.balls = []
         self.last = time()
         self.COST = 10*self.gen
-        # self._gui = FactoryGui(self)
+        self.menu = FactoryMenu(self)
     def output(self):
         delta = time()-self.last
         points = self.gen * delta
@@ -118,3 +116,23 @@ class Generator(Building):
     @tier.setter
     def tier(self, new_tier):
         self._tier = new_tier
+        
+class BuildingMenu:
+    def __init__(self, building) -> None:
+        self.building = building
+        self.manager = self.building.game.manager
+        rect = pygame.Rect(0,0, surf_width()*.7, surf_height()*.7)
+        rect.center = sc_center()
+        self.container = UIPanel(rect, 1, self.manager)
+
+
+class CoreMenu(BuildingMenu):
+    def __init__(self, core:Core) -> None:
+        super().__init__(core)
+class FactoryMenu(BuildingMenu):
+    def __init__(self, factory:Factory) -> None:
+        super().__init__(factory)
+        brect = pygame.Rect(0,0, 100, 40)
+        brect.center = sc_center()
+        brect.y -= 30 
+        self.retrieve = UIButton(brect, "Retrieve", self.manager, self.container, "Click to retrieve points")

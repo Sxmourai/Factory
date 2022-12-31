@@ -1,10 +1,13 @@
 import pygame
-from src.ressources import get_vec, sysFont, get_surf
+from src.graphical.menu import Stats
+from src.ressources import get_vec, get_game, sysFont, get_surf
 class Camera:
     """Camera object for game"""
     def __init__(self, pos:tuple[int,int]) -> None:
         self.x, self.y = pos
         self.surf = get_surf()
+        self.game = get_game()
+        self.menus = []
     def move(self, direction:int|float, sprint:bool=False):
         """Moves the camera, in a direction, and if it should sprint
 
@@ -129,3 +132,30 @@ class Camera:
             rect.center = pos
         else:
             rect.center = rect.x,rect.y
+
+
+
+# class Monstre:
+#     def __init__(self, position, hp, chemin_pour_texture) -> None:
+#         self.pos = position
+#         self.hp = hp
+#         self.texture = load_texture(chemin_pour_texture)
+        
+#     def foo(self):
+#         self.pos
+
+# class Alien(Monstre):
+#     def __init__(self, position) -> None:
+#         super().__init__(position, 100, "alien.png")
+
+
+# def Journée():
+#     Samuser = True
+#     eat(Samuser)
+#     if not vacances:
+#         school(False)
+#     else:
+#         inviterAmis(Samuser)
+#     sleep(Samuser)
+#     code(Samuser)
+#     Journée()
