@@ -41,7 +41,7 @@ Goal: Get as much points, and research
 #### Technical description
                                     Game class
           Event-Controller        World    Camera                          Menu-Controller 
-  Event-Handler Keys-Handler  Builds PositionManager Renderer   Menus Click events go into Event-Handler
+    Event-Handler Keys-Handler  Builds PositionManager Renderer   Menus Click events go into Event-Handler
                                                                                     ^problem^
 
 Event-Handler: takes the pygame events, and process them.
