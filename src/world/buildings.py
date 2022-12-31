@@ -8,31 +8,32 @@ class Building(Sprite):
     """Building on the map"""
     W = 1
     H = 1
-    IMG_PATH = ""
     COST = 10
     TITLE = "Sample"
     DESCRIPTION = "Sample building to create others"
-    def __init__(self, pos:tuple=()):
-        super().__init__(pos, (self.W*TW, self.H*TH), self.IMG_PATH)
-        if len(pos) == 2:
-            self.construct(pos)
+    def __init__(self, pos:tuple[int,int], img_path:str, constructed:bool=False):
+        self.constructed = constructed
+        super().__init__(pos, (self.W*TW, self.H*TH), img_path)
+        self.menu = None
+        if not self.constructed:
+            self.cimg = self.img.copy()
+            self.img.set_alpha(125)
 
     def construct(self, pos=None):
-        if self.game.menu_controller.buyable(self.COST, buy_possible=True):
+        if self.game.menu_controller.buyable(self.COST, buy_possible=True) and not self.constructed:
             pos = pos if pos else self.pos
             self.map.set(pos, self, self.size)
             self.pos = pos
+            self.img = self.cimg
             self.constructed = True
 
 class Core(Building):
     COST = 100
-    IMG_PATH = "core.png"
-    hollow_img = load(IMG_PATH, tile=True)
-    hollow_img.set_alpha(125)
     TITLE = "Core"
     DESCRIPTION = "The core doesn't have a use for now... Sorry"
-    def __init__(self, pos):
-        super().__init__(pos)
+    IMG_PATH = "core"
+    def __init__(self, pos, constructed:bool=False):
+        super().__init__(pos,self.IMG_PATH, constructed)
         self.tier = 1
         self.menu = CoreMenu(self)
 
@@ -42,13 +43,11 @@ class Core(Building):
 class Factory(Building):
     W,H = 1,1
     COST = 10
-    IMG_PATH = "factory.png"
-    hollow_img = load(IMG_PATH, tile=True)
-    hollow_img.set_alpha(125)
     TITLE = "Factory"
     DESCRIPTION = "The factory produces points that you can use in the shop."
-    def __init__(self, pos, tier=1):
-        super().__init__(pos)
+    IMG_PATH = "factory"
+    def __init__(self, pos, tier=1, constructed:bool=False):
+        super().__init__(pos, self.IMG_PATH, constructed)
         self.buffer = 0
         self.max = 1000*tier
         self.gen = 1*tier
@@ -57,30 +56,6 @@ class Factory(Building):
         self.last = time()
         self.COST = 10*self.gen
         self.menu = FactoryMenu(self)
-    def output(self):
-        delta = time()-self.last
-        points = self.gen * delta
-        if points >= 1:
-            for edge in self.edges:
-                points = self.give(edge, points)
-                break
-            if not self.edges:
-                self.buffer += points
-            self.last = time()
-
-    def give(self, edge, points): #UNUSABLE
-        if self.buffer - points >= 0:
-            self.buffer -= points
-            return edge.receive(points)
-        self.buffer += edge.receive(self.buffer)
-        return points - self.buffer
-        
-    def receive(self, points):
-        if self.buffer + points > self.max:
-            self.buffer = self.max
-            return self.buffer+points - self.max
-        self.buffer += points
-        return 0
     def retrieve(self):
         delta = time()-self.last
         points = self.gen * delta * self.game.multiplier
@@ -99,15 +74,14 @@ class Factory(Building):
         for ball in self.balls:
             ball.move()
 
+
 class Generator(Building):
-    IMG_PATH = "generator.png"
     COST = 500
-    hollow_img = load(IMG_PATH, tile=True)
-    hollow_img.set_alpha(125)
     TITLE = "Generator"
     DESCRIPTION = "The generator boosts the production of the factory."
-    def __init__(self, pos: tuple = ()):
-        super().__init__(pos)
+    IMG_PATH = "generator"
+    def __init__(self, pos:tuple[int,int], constructed:bool=False):
+        super().__init__(pos, self.IMG_PATH, constructed)
         self._tier = 1
         self.game.multiplier += self.tier
     @property
@@ -116,7 +90,7 @@ class Generator(Building):
     @tier.setter
     def tier(self, new_tier):
         self._tier = new_tier
-        
+
 class BuildingMenu:
     def __init__(self, building) -> None:
         self.building = building
@@ -124,7 +98,11 @@ class BuildingMenu:
         rect = pygame.Rect(0,0, surf_width()*.7, surf_height()*.7)
         rect.center = sc_center()
         self.container = UIPanel(rect, 1, self.manager)
-
+        self.hide()
+    def hide(self):
+        self.container.hide()
+    def show(self):
+        self.container.show()
 
 class CoreMenu(BuildingMenu):
     def __init__(self, core:Core) -> None:
@@ -134,5 +112,5 @@ class FactoryMenu(BuildingMenu):
         super().__init__(factory)
         brect = pygame.Rect(0,0, 100, 40)
         brect.center = sc_center()
-        brect.y -= 30 
+        brect.y -= 30
         self.retrieve = UIButton(brect, "Retrieve", self.manager, self.container, "Click to retrieve points")

@@ -1,5 +1,7 @@
 import pygame
 from pygame_gui.elements import UITextBox, UIButton, UIPanel
+from pygame_gui.core import ObjectID
+from src.graphical.graphical import ButtonLogo
 from src.graphical.gui import ConstructMenu
 from src.ressources import get_game, load, gen
 
@@ -13,7 +15,7 @@ class Stats:
         self.manager = self.game.manager
         self._points = 1000
         self._research = 0
-        self.container = UITextBox(self.content, pygame.Rect(-9,-9, 250, 40))
+        self.container = UITextBox(self.content, pygame.Rect(-2,-2, 250, 40), object_id="@stats_container")
         self.game.camera.menus.append(self)
 
     @property
@@ -52,12 +54,12 @@ class Commands:
     def __init__(self) -> None:
         self.game = get_game()
         self.manager = self.game.manager
-        self.panel = UIPanel(pygame.Rect(0, 200, 40, 300), 0, self.manager)
+        self.panel = UIPanel(pygame.Rect(0, 200, 40, 300), 0, self.manager, margins={"left":0,"right":0,"top":0,"bottom":0}, object_id=ObjectID("Commands", None))
         self.panel.relative_right_margin = 0
         self.panel.relative_bottom_margin = 0
         self.commands = [] # order: button
         self.construct_menu = ConstructMenu()
-        self.add_button("hammer.png", self.construct_menu.toggle)
+        self.commands.append(ButtonLogo("commands\\hammer", pygame.Rect(0,0,40,40), self.panel, object_id="@construction"))
         self.panels = []
         self.c_gui = None
     def add_button(self, img_path:str, func) -> UIButton:
@@ -73,16 +75,18 @@ class Commands:
         if img_path:
             pass#print("Useless for now")
         button = UIButton(pygame.Rect(0,0,40,40), "", self.manager, self.panel)
+
+
         self.commands.append((button, func))
         return button
-    def handle_event(self, event):
+    def handle_click_event(self, event):
         """Handle a click event for the UIButtons
         Args:
             event (_type_): Click event
         """
         for i,packer in enumerate(self.commands):
-            button, func = packer
-            func()
+            # button, func = packer
+            if event.ui_element.object_ids[-1] == "@construction": self.construct_menu.toggle()
         self.construct_menu.handle_event(event)
 
     def construct_panel(self):
@@ -119,7 +123,7 @@ class Panel:
 class ConstructPan(Panel):
     """Derived panel"""
     def __init__(self):
-        super().__init__("guis/construct.png", "Construct")
+        super().__init__("guis/construct", "Construct")
 
 
 # class Menu(Sprite):

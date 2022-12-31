@@ -3,12 +3,24 @@ from pathlib import Path
 import pygame
 #from time import time
 PATH = str(Path(".").cwd())+"\\src\\"
-imgpath = lambda path: PATH+"data\\img\\"+path
+
+def data(*paths):
+    applied_path = PATH+"data"
+    for path in paths:
+        applied_path += f"\\{path}"
+    return applied_path
+
+def font(name:str, extension:str="ttf"):
+    return data("font", name+"."+extension)
+
+def imgpath(name:str, extension:str="png"):
+    return data("img", name+"."+extension)
+
 SCALE = 100
 TILE_SIZE = (int(.3*SCALE), int(.3*SCALE))
 TW, TH = TILE_SIZE
-TILE_IMG = pygame.transform.scale(pygame.image.load(imgpath("tile.png")), TILE_SIZE)
-TILE_IMG_HOVER = pygame.transform.scale(pygame.image.load(imgpath("tile_selected.png")), TILE_SIZE)
+TILE_IMG = pygame.transform.scale(pygame.image.load(imgpath("tile")), TILE_SIZE)
+TILE_IMG_HOVER = pygame.transform.scale(pygame.image.load(imgpath("tile_selected")), TILE_SIZE)
 
 
 
@@ -97,7 +109,7 @@ def get_vec(hyp, orientation):
     rad = radians(orientation)
     return sin(rad)*hyp, cos(rad)*hyp
 
-def load(img_path:str, size:tuple[int,int]=None, multiplier:tuple[int,int]=(1,1), tile:bool=False) -> pygame.Surface:
+def load(img_path:str, size:tuple[int,int]=None, multiplier:tuple[int,int]=(1,1), tile:bool=False, extension:str="png") -> pygame.Surface:
     """Loads an image
 
     Args:
@@ -109,7 +121,7 @@ def load(img_path:str, size:tuple[int,int]=None, multiplier:tuple[int,int]=(1,1)
     Returns:
         pygame.Surface: Loaded image
     """
-    img_path = imgpath(img_path)
+    img_path = imgpath(img_path, extension)
     img = pygame.image.load(img_path)
     if size:
         size = size[0]*multiplier[0], size[1]*multiplier[1]
