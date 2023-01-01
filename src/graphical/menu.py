@@ -16,25 +16,33 @@ from src.ressources import data, font, get_game, load, gen, surf_height, surf_wi
 CONTAINER = gen(400,400)
 BUTTONR = (50,50)
 
-class SimpleMenu(ABC):
-    def __init__(self, static:bool=True, centered_big:bool=False) -> None:
+class BasicMenu(ABC):
+    def __init__(self, controller) -> None:
         self.game = get_game()
         self.manager = self.game.manager
+        self.controller = controller
+
+    @property
+    def visible(self): return self.container.visible
+    def hide(self):
+        self.controller.last_menu = self
+        self.container.hide()
+    def show(self):self.container.show()
+    def toggle(self): self.hide() if self.visible else self.show()
+
+
+class SimpleMenu(BasicMenu):
+    def __init__(self, controller,static:bool=True, centered_big:bool=False) -> None:
+        super().__init__(controller)
         self.static = static
         if self.static:self.game.camera.menus.append(self)
         if centered_big: self.container = UIContainer(pygame.Rect(0,0, surf_width()*.7, surf_height()*.7),self.manager, anchors={"center":"center"})
 
 
-    @property
-    def visible(self): return self.container.visible
-    def hide(self):self.container.hide()
-    def show(self):self.container.show()
-
-
 class Stats(SimpleMenu):
     """Stats menu"""
-    def __init__(self) -> None:
-        super().__init__(True)
+    def __init__(self, controller) -> None:
+        super().__init__(controller, True)
         self._points = 1000
         self._research = 0
         self.container = UITextBox(self.content, pygame.Rect(-2,-2, 250, 40), object_id="@stats_container")
@@ -78,8 +86,8 @@ class Stats(SimpleMenu):
 
 class Commands(SimpleMenu):
     """Commands menu"""
-    def __init__(self) -> None:
-        super().__init__(True)
+    def __init__(self,controller) -> None:
+        super().__init__(controller, True)
         self.container = UIPanel(pygame.Rect(0, 200, 40, 300), 0, self.manager, margins={"left":0,"right":0,"top":0,"bottom":0}, object_id=ObjectID("Commands", None))
         self.container.relative_right_margin = 0
         self.container.relative_bottom_margin = 0
@@ -122,26 +130,20 @@ class Commands(SimpleMenu):
         elif isinstance(self.c_gui, ConstructPan):
             self.c_gui = None
 
-class GlobalMenu(ABC):
-    def __init__(self) -> None:
-        self.game = get_game()
-        self.manager = self.game.manager
+class GlobalMenu(BasicMenu):
+    def __init__(self,controller) -> None:
+        super().__init__(controller)
         self.screen_rect = pygame.Rect(0,0,surf_width(),surf_height())
         container_rect = self.screen_rect.copy()
         container_rect.size = container_rect.w*.6, container_rect.h*.6
         self.container = UIPanel(container_rect,manager=self.manager, object_id="@start_panel", anchors={"center":"center"})
         self.background = load("start_background", (surf_width(), surf_height()), extension="jpg")
         self.title = UILabel(pygame.Rect(0, 10, -1, -1), GAME_TITLE, self.manager, self.container, anchors={"center":"centerx", "top":"top"}, object_id="@game_title")
-    def hide(self): self.container.hide()
-    def show(self): self.container.show()
-    @property
-    def visible(self): return self.container.visible
-    def toggle(self): self.hide() if self.visible else self.show()
 
 
 class StartMenu(GlobalMenu):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, controller) -> None:
+        super().__init__(controller)
         self.start = UIButton(pygame.Rect(-100,30,200,80), "Start", self.manager,self.container, "Click to start a new game", object_id="@start_button", anchors={'center': 'center'})
         self.load = UIButton(pygame.Rect(100,30,200,80), "Load", self.manager,self.container, "Click to load a game", object_id="@load_button", anchors={'center': 'center'})
         self.quit = UIButton(pygame.Rect(0,120,200,80), "Quit", self.manager,self.container, "Click to quit", object_id="@quit_button", anchors={'center': 'center'})
@@ -154,8 +156,8 @@ class StartMenu(GlobalMenu):
             self.container.hide()
             self.game.menu_controller.commands.show()
 class LoadMenu(GlobalMenu):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self,controller) -> None:
+        super().__init__(controller)
         self.games = []
         self.games_container = UIScrollingContainer(pygame.Rect(0,0,self.container.rect.w, self.container.rect.h*.6),self.manager, container=self.container)
         for i,game in enumerate(self.get_games_saves()):
@@ -193,11 +195,15 @@ class LoadMenu(GlobalMenu):
         self.game.start()
 
 class TitleScreen(GlobalMenu):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self,controller) -> None:
+        super().__init__(controller)
         self.q_save = UIButton(pygame.Rect(-100,120,200,80), "Save & quit", self.manager,self.container, "Click to save & quit", object_id="@quit_save_button", anchors={'center': 'center'})
         self.q_lost = UIButton(pygame.Rect(100,120,200,80), "Quit without saving", self.manager,self.container, "Click to quit without saving", object_id="@quit_button", anchors={'center': 'center'})
         self.hide()
+        self.saving = False
+    def save(self):
+        self.game.menu_controller.prompt("Name of save: ")
+        self.saving = True
 
 
 class Panel:

@@ -2,8 +2,8 @@
 from time import time
 import pygame
 import pygame_gui
-from pygame_gui.core import IncrementalThreadedResourceLoader, ObjectID
-from pygame_gui.elements import UILabel
+from pygame_gui.core import IncrementalThreadedResourceLoader, ObjectID, UIContainer
+from pygame_gui.elements import UILabel, UITextEntryLine, UIButton
 
 from src.graphical.camera import Camera
 from src.world.world import Map
@@ -32,27 +32,12 @@ class Game:
         self._multiplier = 1
         self.menu_controller = MenuController()
         self.event_controller = EventController()
-        rect = pygame.Rect(0, 0, 300, 50)
-        rect.center = sc_center()
-        rect.centery = surf_height()/6
-        self.alert_text = UILabel(
-            rect, "", self.manager, object_id=ObjectID("@label_warn", "#label_alert"))
-        self.alert_text.hide()
-        self.alert_time = None
-        
 
     def run(self, keys, events):
-        if self.alert_time and time()-self.alert_time > 3:
-            self.alert_text.hide()
-            self.alert_time = None
         self.draw()
         self.event_controller.handle_keys(keys)
+        self.menu_controller.run()
         return self.event_controller.handle_events(events)
-
-    def alert(self, text, level=1):
-        self.alert_text.set_text(text)
-        self.alert_text.show()
-        self.alert_time = time()
 
     @property
     def multiplier(self):
@@ -87,7 +72,7 @@ class Game:
         """Creates a core"""
         return Core(pos)
 
-    def exit(self, save:bool=False):
-        if save:GameSave.create("Untitled world", self.map.unload_map(), self.menu_controller.stats.stats, time())
+    def exit(self, save_name:str=None):
+        if save_name:GameSave.create(save_name, self.map.unload_map(), self.menu_controller.stats.stats, time())
         pygame.quit()
         exit()

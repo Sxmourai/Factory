@@ -66,5 +66,10 @@
             "size": "12",
             "regular_ressource":{"regular_path":"data/fonts/Montserrat-Regular.ttf"}
         }
+    },
+    "@alert_label":{
+        "colours":{
+            "dark_bg":"#0000"
+        }
     }
 }

@@ -33,3 +33,8 @@ class ButtonLogo:
         image_rect.h = relative_rect.h * .7
         image_rect.center = relative_rect.w/2, relative_rect.h/2
         self.imageLogo = UIImage(image_rect, load(img_path), self.manager, container=self.container)
+
+class BackButton:
+    def __init__(self, rect:pygame.Rect|tuple,container, obj_id, tool_tip_text:str, anchors:dict) -> None:
+        self.manager = get_manager()
+        self.button = UIButton(rect, "Back", self.manager, container, tool_tip_text, object_id=obj_id, anchors=anchors)

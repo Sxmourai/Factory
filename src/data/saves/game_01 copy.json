@@ -1,9 +1,0 @@
-{
-    "title": "Game 2",
-    "creationDate": "1029583574",
-    "stats": [10, 0],
-    "map":{
-        "0,0": "Factory",
-        "0,1": "Core"
-    }
-}
