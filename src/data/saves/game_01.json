@@ -1,0 +1,8 @@
+{
+    "title": "Game 1",
+    "creationDate": "1029583573",
+    "stats": [10, 0],
+    "map":{
+        "0,0": "Factory"
+    }
+}

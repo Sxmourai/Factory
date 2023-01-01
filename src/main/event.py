@@ -18,6 +18,7 @@ class EventController:
 
     def handle_events(self, events) -> bool:
         for event in events:
+            self.manager.process_events(event)
             if event.type == pygame.QUIT:
                 return False
             elif event.type == pygame.MOUSEBUTTONUP:
@@ -26,7 +27,6 @@ class EventController:
                 self.handle_hover_event(event)
             elif event.type == UI_BUTTON_PRESSED:
                 self.game.menu_controller.handle_button_click_event(event)
-            self.manager.process_events(event)
         return True
 
     def handle_click_event(self, event):
@@ -68,7 +68,7 @@ class EventController:
                 if self.construction_mode:
                     self.exit_construction_mode()
                 else:
-                    self.game.menu_controller.hide_building_menu()
+                    self.game.menu_controller.hide_menus()
 
     def enter_construction_mode(self, building:Building):
         pos = self.map.tile_from_screen(rround=True)
@@ -78,6 +78,7 @@ class EventController:
     def exit_construction_mode(self):
         self.to_construct = None
         self.construction_mode = False
+        # self.game.menu_controller.enabled_build_menu
 
     def construct(self, pos):
         if self.construction_mode:

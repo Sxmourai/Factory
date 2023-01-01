@@ -1,9 +1,14 @@
+import json
 import pygame
-from pygame_gui.elements import UITextBox, UIButton, UIPanel
+from pygame_gui.elements import UITextBox, UIButton, UIPanel, UILabel, UIScrollingContainer
 from pygame_gui.core import ObjectID
+from pygame_gui.ui_manager import UIContainer
+from os import listdir
+from os.path import isfile
+
 from src.graphical.graphical import ButtonLogo
 from src.graphical.gui import ConstructMenu
-from src.ressources import get_game, load, gen
+from src.ressources import data, font, get_game, load, gen, surf_height, surf_width, GAME_TITLE
 
 CONTAINER = gen(400,400)
 BUTTONR = (50,50)
@@ -95,6 +100,78 @@ class Commands:
             self.c_gui = ConstructPan()
         elif isinstance(self.c_gui, ConstructPan):
             self.c_gui = None
+    def hide(self):self.panel.hide()
+    def show(self):self.panel.show()
+
+
+class StartMenu:
+    def __init__(self) -> None:
+        self.game = get_game()
+        self.manager = self.game.manager
+        self.screen_rect = pygame.Rect(0,0,surf_width(),surf_height())
+        container_rect = self.screen_rect.copy()
+        container_rect.size = container_rect.w*.6, container_rect.h*.6
+        self.container = UIPanel(container_rect,manager=self.manager, object_id="@start_panel", anchors={"center":"center"})
+        self.title = UILabel(pygame.Rect(0, 10, -1, -1), GAME_TITLE, self.manager, self.container, anchors={"center":"centerx", "top":"top"}, object_id="@game_title")
+        self.start = UIButton(pygame.Rect(-100,30,200,80), "Start", self.manager,self.container, "Click to start a new game", object_id="@start_button", anchors={'center': 'center'})
+        self.load = UIButton(pygame.Rect(100,30,200,80), "Load", self.manager,self.container, "Click to load a game", object_id="@load_button", anchors={'center': 'center'})
+        self.quit = UIButton(pygame.Rect(0,120,200,80), "Quit", self.manager,self.container, "Click to quit", object_id="@quit_button", anchors={'center': 'center'})
+        self.background = load("start_background", (surf_width(), surf_height()), extension="jpg")
+
+    def hide(self): self.container.hide()
+
+    def draw(self):
+        if self.game.started is False:
+            self.game.menu_controller.commands.hide()
+            self.game.surf.blit(self.background, self.screen_rect)
+        else:
+            self.container.hide()
+            self.game.menu_controller.commands.show()
+class LoadMenu:
+    def __init__(self) -> None:
+        self.game = get_game()
+        self.manager = self.game.manager
+        self.screen_rect = pygame.Rect(0,0,surf_width(),surf_height())
+        container_rect = self.screen_rect.copy()
+        container_rect.size = container_rect.w*.6, container_rect.h*.6
+        self.container = UIPanel(container_rect,manager=self.manager, object_id="@start_panel", anchors={"center":"center"})
+        self.title = UILabel(pygame.Rect(0, 10, -1, -1), GAME_TITLE, self.manager, self.container, anchors={"center":"centerx", "top":"top"}, object_id="@game_title")
+        self.games = []
+        self.games_container = UIScrollingContainer(pygame.Rect(0,0,container_rect.w, container_rect.h*.6),self.manager, container=self.container)
+        for i,game in enumerate(self.get_games_saves()):
+            self.games.append((UIButton(pygame.Rect(0, 15+55*i, 400, 50),game.title, self.manager, self.games_container, anchors={"centerx":"centerx"}), game))
+        self.back = UIButton(pygame.Rect(0,-100,200,80), "Back", self.manager,self.container, "Click to go back", object_id="@back_button", anchors={'centerx': 'centerx','bottom':'bottom'})
+        self.background = load("start_background", (surf_width(), surf_height()), extension="jpg")
+        self.hide()
+        
+    def handle_click(self, event):
+        for game in self.games:
+            if event.ui_element == game[0]:
+                self.load_game(game[1])
+
+    def hide(self): self.container.hide()
+    def show(self): self.container.show()
+
+    def get_games_saves(self):
+        for file in listdir(data("saves")):
+            if file.split(".")[-1] == "json":
+                with open(data("saves",file), "r") as f:
+                    game = json.load(f)
+                    yield GameSave(game)
+
+    def draw(self):
+        if self.game.started is False:
+            self.game.menu_controller.commands.hide()
+            self.game.surf.blit(self.background, self.screen_rect)
+        else:
+            self.container.hide()
+            self.game.menu_controller.commands.show()
+
+    def load_game(self, game):
+        self.game.map.load_map(game.map)
+        self.game.menu_controller.stats.points = game.stats[0]
+        self.game.menu_controller.stats.research = game.stats[1]
+        self.game.start()
 
 
 class Panel:
@@ -120,10 +197,23 @@ class Panel:
         self.buttons.append(button)
         return button
 
+class GameSave:
+    def __init__(self, save) -> None:
+        self.title = save["title"]
+        self.map = save["map"]
+        self.date = save["creationDate"]
+        self.stats = save["stats"]
+    @staticmethod
+    def create(title, world, stats, date_of_creation):
+        return GameSave({"title":title, "map":world, "stats":stats, "creationDate":date_of_creation})
+
+
 class ConstructPan(Panel):
     """Derived panel"""
     def __init__(self):
         super().__init__("guis/construct", "Construct")
+
+
 
 
 # class Menu(Sprite):

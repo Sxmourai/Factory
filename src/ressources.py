@@ -2,6 +2,7 @@ from math import sin, cos, radians
 from pathlib import Path
 import pygame
 #from time import time
+GAME_TITLE = "Fusion"
 PATH = str(Path(".").cwd())+"\\src\\"
 
 def data(*paths):

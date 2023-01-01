@@ -19,13 +19,14 @@ class Building(Sprite):
             self.cimg = self.img.copy()
             self.img.set_alpha(125)
 
-    def construct(self, pos=None):
-        if self.game.menu_controller.buyable(self.COST, buy_possible=True) and not self.constructed:
-            pos = pos if pos else self.pos
-            self.map.set(pos, self, self.size)
-            self.pos = pos
-            self.img = self.cimg
-            self.constructed = True
+    def construct(self, pos=None, buy:bool=True):
+        if buy:pass
+        elif not self.game.menu_controller.buyable(self.COST, buy_possible=True) and self.constructed: return
+        pos = pos if pos else self.pos
+        self.map.set(pos, self, self.size)
+        self.pos = pos
+        self.img = self.cimg
+        self.constructed = True
 
 class Core(Building):
     COST = 100
@@ -92,25 +93,42 @@ class Generator(Building):
         self._tier = new_tier
 
 class BuildingMenu:
-    def __init__(self, building) -> None:
+    def __init__(self, building, title) -> None:
         self.building = building
         self.manager = self.building.game.manager
         rect = pygame.Rect(0,0, surf_width()*.7, surf_height()*.7)
         rect.center = sc_center()
         self.container = UIPanel(rect, 1, self.manager)
+        self.title = UILabel(pygame.Rect(5,5,-1,-1), title, self.manager, self.container)
+        self.buttons = []
         self.hide()
     def hide(self):
         self.container.hide()
     def show(self):
         self.container.show()
+    def toggle(self):
+        if self.container.visible:
+            self.hide()
+        else:self.show()
+    def button(self, title:str, tooltip:str="", on_click=None, *args):
+        brect = pygame.Rect(0,0, 200, 50)
+        brect.center = self.container.rect.w/2, self.container.rect.h/2
+        brect.y -= 30
+        brect.y += 60*len(self.buttons)
+        button = UIButton(brect, title, self.manager, self.container, tooltip)
+        self.buttons.append((button, on_click, args))
+        return button
+    def handle_click(self, event):
+        for button,func, args in self.buttons:
+            if event.ui_element == button:
+                if callable(func):func(*args)
+
 
 class CoreMenu(BuildingMenu):
     def __init__(self, core:Core) -> None:
-        super().__init__(core)
+        super().__init__(core, "Core menu")
 class FactoryMenu(BuildingMenu):
     def __init__(self, factory:Factory) -> None:
-        super().__init__(factory)
-        brect = pygame.Rect(0,0, 100, 40)
-        brect.center = sc_center()
-        brect.y -= 30
-        self.retrieve = UIButton(brect, "Retrieve", self.manager, self.container, "Click to retrieve points")
+        super().__init__(factory, "Factory menu")
+        self.retrieve = self.button("Retrieve", "Click to retrieve points", factory.retrieve)
+        self.upgrade = self.button("Upgrade", "Click to upgrade this factory", factory.upgrade)

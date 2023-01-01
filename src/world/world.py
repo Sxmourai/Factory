@@ -1,6 +1,6 @@
 from src.ressources import load, transform,rprint, get_game, TW, TH, TILE_SIZE, TILE_IMG, TILE_IMG_HOVER
 
-from src.world.buildings import Factory
+from src.world.buildings import Core, Factory, Generator
 import pygame
 
 class Map:
@@ -83,3 +83,13 @@ class Map:
         y -= self.camera.y
         self.last_rect = pygame.Rect(x,y, *TILE_SIZE)
         self.last_rect.center = x,y
+    
+    def load_map(self, world):
+        for pos, build in world.items():
+            pos = tuple([int(cpos) for cpos in pos.split(",")])
+            if build == "Factory":
+                Factory(pos).construct(buy=False)
+            elif build == "Core":
+                Core(pos).construct(buy=False)
+            elif build == "Generator":
+                Generator(pos).construct(buy=False)

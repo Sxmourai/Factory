@@ -45,5 +45,26 @@
             "shape": "rounded_rectangle",
             "shape_corner_radius": "5"
         }
+    },
+    "@start_panel":{
+        "colours":{
+            "dark_bg": "#0009"
+        },
+        "misc":{
+            "border_width": "0",
+            "shadow_width": "0",
+            "shape":"rounded_rectangle",
+            "shape_corner_radius": "10"
+        }
+    },
+    "@game_title":{
+        "colours":{
+            "dark_bg":"#0000"
+        },
+        "font":{
+            "name": "montserrat",
+            "size": "12",
+            "regular_ressource":{"regular_path":"data/fonts/Montserrat-Regular.ttf"}
+        }
     }
 }

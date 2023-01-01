@@ -22,6 +22,7 @@ class Game:
 
     def __init__(self, size, screen_size, ticks: int = None):
         set_game(self)
+        self.started = False
         self.surf = pygame.display.set_mode(screen_size)
         self.manager = pygame_gui.UIManager(screen_size, path(
             "data/themes/theme.json"), resource_loader=IncrementalThreadedResourceLoader())
@@ -38,6 +39,7 @@ class Game:
             rect, "", self.manager, object_id=ObjectID("@label_warn", "#label_alert"))
         self.alert_text.hide()
         self.alert_time = None
+        
 
     def run(self, keys, events):
         if self.alert_time and time()-self.alert_time > 3:
@@ -66,9 +68,16 @@ class Game:
         self.camera.render(self.PLAYER_IMAGE, sc_center())
         # for gui in self.guis.values():
         #     gui.draw()
+        self.menu_controller.start_menu.draw()
         self.manager.update(self.clock[0].tick(self.clock[1])/1000.0)
         self.manager.draw_ui(self.surf)
         pygame.display.flip()
+
+    def start(self):
+        self.started = True
+        self.menu_controller.start_menu.hide()
+        self.menu_controller.load_menu.hide()
+        self.menu_controller.hide_menus()
 
     def factory(self, pos: tuple[int, int], tier: int) -> Factory:
         """Creates a new factory"""
