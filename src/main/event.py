@@ -21,6 +21,15 @@ class EventController:
             self.manager.process_events(event)
             if event.type == pygame.QUIT:
                 return False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if self.construction_mode:
+                        self.exit_construction_mode()
+                    else:
+                        if self.game.menu_controller.active_menus():
+                            self.game.menu_controller.hide_menus()
+                        else:
+                            self.game.menu_controller.title_screen.toggle()
             elif event.type == pygame.MOUSEBUTTONUP:
                 self.handle_click_event(event)
             elif event.type == pygame.MOUSEMOTION:
@@ -64,11 +73,6 @@ class EventController:
                 self.enter_construction_mode(Factory)
             if keys[pygame.K_c]:
                 self.enter_construction_mode(Core)
-            if keys[pygame.K_ESCAPE]:
-                if self.construction_mode:
-                    self.exit_construction_mode()
-                else:
-                    self.game.menu_controller.hide_menus()
 
     def enter_construction_mode(self, building:Building):
         pos = self.map.tile_from_screen(rround=True)

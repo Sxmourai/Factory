@@ -83,7 +83,7 @@ class Map:
         y -= self.camera.y
         self.last_rect = pygame.Rect(x,y, *TILE_SIZE)
         self.last_rect.center = x,y
-    
+
     def load_map(self, world):
         for pos, build in world.items():
             pos = tuple([int(cpos) for cpos in pos.split(",")])
@@ -93,3 +93,16 @@ class Map:
                 Core(pos).construct(buy=False)
             elif build == "Generator":
                 Generator(pos).construct(buy=False)
+
+    def unload_map(self) -> dict:
+        unloaded_map = {}
+        for pos, build in self.map.items():
+            b_instance = type(build)
+            if b_instance == Factory:
+                b_title = "Factory"
+            elif b_instance == Core:
+                b_title = "Core"
+            elif b_instance == Generator:
+                b_title = "Generator"
+            unloaded_map[f"{pos[0]},{pos[1]}"] = b_title
+        return unloaded_map

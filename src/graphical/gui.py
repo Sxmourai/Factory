@@ -16,6 +16,8 @@ class Menu:
 
         self.buttons = []
         self.panel.hide()
+    
+    def visible(self):return self.panel.visible
 
     def toggle(self):
         if self.panel.visible:
@@ -54,6 +56,7 @@ class ConstructMenu(Menu):
         self.game = get_game()
         UILabel(pygame.Rect(5,5,-1,-1), "Construction menu",self.manager, self.panel)
 
+    
     def add_building(self, building):
         self.button(building.IMG_PATH, building.TITLE,
                     building.DESCRIPTION, self.game.event_controller.enter_construction_mode, building)

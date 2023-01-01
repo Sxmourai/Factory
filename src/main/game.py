@@ -10,7 +10,7 @@ from src.world.world import Map
 from src.ressources import load, set_game, path, TILE_IMG_HOVER, sc_center, surf_height
 from src.graphical.gui import ConstructMenu
 from src.world.buildings import Factory, Core, Building
-from src.graphical.menu import Commands, Stats
+from src.graphical.menu import Commands, GameSave, Stats
 from src.main.event import EventController
 from src.main.menu import MenuController
 
@@ -86,3 +86,8 @@ class Game:
     def core(self, pos: tuple[int, int]) -> Core:
         """Creates a core"""
         return Core(pos)
+
+    def exit(self, save:bool=False):
+        if save:GameSave.create("Untitled world", self.map.unload_map(), self.menu_controller.stats.stats, time())
+        pygame.quit()
+        exit()
