@@ -1,0 +1,75 @@
+{
+    "defaults":{
+        "misc":{
+            "border_width": "5"
+        }
+    },
+    "text_box":{
+        "misc":{
+            "border_width":"0",
+            "shadow_width":"0"
+        }
+    },
+    "label":{
+        "colours":{
+            "dark_bg": "#0009",
+            "normal_text": "#fff"
+        }
+    },
+    "#label_alert":{
+        "font":
+        {
+            "name": "montserrat",
+            "size": "12",
+            "bold": "0",
+            "italic": "0"
+        }
+    },
+    "@label_warn":{
+        "colours":{
+            "normal_text": "#f99"
+        }
+    },
+    "@label_error":{
+        "colours":{
+            "normal_text": "#f00"
+        }
+    },
+    "#construct_desc":{
+        "colours":{
+            "dark_bg":"#fff0"
+        }
+    },
+    "@stats_container":{
+        "misc":{
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "5"
+        }
+    },
+    "@start_panel":{
+        "colours":{
+            "dark_bg": "#0009"
+        },
+        "misc":{
+            "border_width": "0",
+            "shadow_width": "0",
+            "shape":"rounded_rectangle",
+            "shape_corner_radius": "10"
+        }
+    },
+    "@game_title":{
+        "colours":{
+            "dark_bg":"#0000"
+        },
+        "font":{
+            "name": "montserrat",
+            "size": "12",
+            "regular_ressource":{"regular_path":"data/fonts/Montserrat-Regular.ttf"}
+        }
+    },
+    "@alert_label":{
+        "colours":{
+            "dark_bg":"#0000"
+        }
+    }
+}
