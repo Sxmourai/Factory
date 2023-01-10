@@ -7,7 +7,7 @@ from pygame_gui.elements import UILabel, UITextEntryLine, UIButton
 
 from src.graphical.camera import Camera
 from src.world.world import Map
-from src.ressources import load, set_game, path, TILE_IMG_HOVER, sc_center, surf_height
+from src.ressources import load, get_app, TILE_IMG_HOVER, sc_center, surf_height
 from src.graphical.gui import ConstructMenu
 from src.world.buildings import Factory, Core, Building
 from src.graphical.menu import Commands, GameSave, Stats
@@ -20,24 +20,16 @@ class Game:
     PLAYER_SIZE = (30, 30)
     PLAYER_IMAGE = load("player", PLAYER_SIZE)
 
-    def __init__(self, size, screen_size, ticks: int = None):
-        set_game(self)
-        self.started = False
-        self.surf = pygame.display.set_mode(screen_size)
-        self.manager = pygame_gui.UIManager(screen_size, path(
-            "data/themes/theme.json"), resource_loader=IncrementalThreadedResourceLoader())
-        self.clock = (pygame.time.Clock(), ticks)
-        self.camera = Camera((0, 0))
-        self.map = Map(size)
+    def __init__(self):
+        self.app = get_app()
+        self.manager = self.app.manager
+        self.camera = self.app.camera
+        self.surf = self.app.surf
+        self.map = Map()
         self._multiplier = 1
-        self.menu_controller = MenuController()
-        self.event_controller = EventController()
 
-    def run(self, keys, events):
+    def run(self):
         self.draw()
-        self.event_controller.handle_keys(keys)
-        self.menu_controller.run()
-        return self.event_controller.handle_events(events)
 
     @property
     def multiplier(self):
@@ -51,18 +43,9 @@ class Game:
         """Draws the elements of the game (tiles, player, buildings, menus etc)"""
         self.map.draw()
         self.camera.render(self.PLAYER_IMAGE, sc_center())
-        # for gui in self.guis.values():
-        #     gui.draw()
-        self.menu_controller.start_menu.draw()
-        self.manager.update(self.clock[0].tick(self.clock[1])/1000.0)
-        self.manager.draw_ui(self.surf)
-        pygame.display.flip()
 
-    def start(self):
-        self.started = True
-        self.menu_controller.start_menu.hide()
-        self.menu_controller.load_menu.hide()
-        self.menu_controller.hide_menus()
+    def start(self, world=None):
+        self.map.load_map(world)
 
     def factory(self, pos: tuple[int, int], tier: int) -> Factory:
         """Creates a new factory"""
@@ -74,5 +57,4 @@ class Game:
 
     def exit(self, save_name:str=None):
         if save_name:GameSave.create(save_name, self.map.unload_map(), self.menu_controller.stats.stats, time())
-        pygame.quit()
-        exit()
+        self.app.stop()

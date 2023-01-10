@@ -54,3 +54,5 @@ PositionManager: Manages position of the cursor, builds etc. SUBJECT TO CHANGE
 Renderer: Renders the game and his objects.
 Menus: Menus for the user e.g. Construct menu
 Click events are SUBJECT TO CHANGE
+
+Made with obsidian (also everything in notes/*)

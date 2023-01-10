@@ -1,16 +1,16 @@
 from pygame_gui import UI_BUTTON_PRESSED
 import pygame
-from src.graphical.menu import Stats, Commands
-from src.ressources import TILE_IMG_HOVER, get_game
+from src.graphical.menu import Stats, Commands, TitleScreen
+from src.ressources import TILE_IMG_HOVER, get_app
 from src.world.buildings import Building, Core, Factory
 
 class EventController:
     def __init__(self) -> None:
-        self.game = get_game()
+        self.app = get_app()
+        self.game = self.app.game
         self.manager = self.game.manager
         self.camera = self.game.camera
         self.map = self.game.map
-        self.stats = self.game.menu_controller.stats
         self.building_menus = [] # TO FILL
         self.to_construct = None
         self.construction_mode = False
@@ -18,24 +18,18 @@ class EventController:
 
     def handle_events(self, events) -> bool:
         for event in events:
-            self.manager.process_events(event)
             if event.type == pygame.QUIT:
                 return False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    if self.construction_mode:
-                        self.exit_construction_mode()
-                    else:
-                        if self.game.menu_controller.active_menus():
-                            self.game.menu_controller.hide_menus()
-                        else:
-                            self.game.menu_controller.title_screen.toggle()
-            elif event.type == pygame.MOUSEBUTTONUP:
-                self.handle_click_event(event)
-            elif event.type == pygame.MOUSEMOTION:
-                self.handle_hover_event(event)
             elif event.type == UI_BUTTON_PRESSED:
-                self.game.menu_controller.handle_button_click_event(event)
+                self.app.menu_controller.handle_button_click_event(event)
+            elif self.app.started:
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self.handle_click_event(event)
+                if event.type == pygame.KEYDOWN:
+                    self.handle_keydown(event.key)
+                elif event.type == pygame.MOUSEMOTION:
+                    self.handle_hover_event(event)
+
         return True
 
     def handle_click_event(self, event):
@@ -43,11 +37,21 @@ class EventController:
         mpos = pygame.mouse.get_pos()
         pos = self.map.tile_from_screen(mpos, rround=True)
         build = self.map.get(pos)
-        self.game.menu_controller.handle_build_click(build, self.to_construct)
+        self.app.menu_controller.handle_build_click(build, self.to_construct)
         if build:
-            if self.construction_mode: self.game.alert("Can't place that here !")
+            if self.construction_mode: self.app.alert("Can't place that here !")
         else:
             self.construct(pos)
+
+    def handle_keydown(self, key):
+        if key == pygame.K_ESCAPE:
+            if self.construction_mode:
+                self.exit_construction_mode()
+            else:
+                if self.app.menu_controller.menu not in (None, TitleScreen):
+                    self.app.menu_controller.hide_menu()
+                else:
+                    self.app.menu_controller.title_screen.toggle()
 
     def handle_hover_event(self, event):
         """Handles hover of the user"""
@@ -78,11 +82,10 @@ class EventController:
         pos = self.map.tile_from_screen(rround=True)
         self.to_construct = building(pos)
         self.construction_mode = True
-        self.game.menu_controller.hide_menus()
+        self.app.menu_controller.hide_menu()
     def exit_construction_mode(self):
         self.to_construct = None
         self.construction_mode = False
-        # self.game.menu_controller.enabled_build_menu
 
     def construct(self, pos):
         if self.construction_mode:

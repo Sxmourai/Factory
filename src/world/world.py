@@ -4,30 +4,28 @@ from src.world.buildings import Core, Factory, Generator
 import pygame
 
 class Map:
-    def __init__(self, size):
-        self.size = size
-        self.map = {}
-        self.game = get_game()
-        self.surf = self.game.surf
-        self.camera = self.game.camera
+    def __init__(self):
+        self.map = None
+        self.game = None
         self.last_rect = pygame.Rect(0,0,0,0)
     def draw(self):
-        for i in range(round(self.surf.get_width()/TW+1)):
-            for j in range(round(self.surf.get_height()/TH+1)):
-                rect = pygame.Rect(transform(i*TW - self.camera.x, TW)+round(self.camera.x/TW)*TW, 
-                                   transform(j*TH - self.camera.y, TH)+round(self.camera.y/TH)*TH, *TILE_SIZE)
-                self.surf.blit(TILE_IMG, rect)
+        if self.game is not None:
+            for i in range(round(self.surf.get_width()/TW+1)):
+                for j in range(round(self.surf.get_height()/TH+1)):
+                    rect = pygame.Rect(transform(i*TW - self.camera.x, TW)+round(self.camera.x/TW)*TW, 
+                                    transform(j*TH - self.camera.y, TH)+round(self.camera.y/TH)*TH, *TILE_SIZE)
+                    self.surf.blit(TILE_IMG, rect)
 
-        for pos, build in self.map.items():
-            rect = pygame.Rect(
-                pos[0]*TW - self.camera.x - TW/2,
-                pos[1]*TH - self.camera.y - TH/2,
-                build.w*TW, build.h*TH)
-            self.camera.render(build.img, rect, transform=True)
-            if type(build) is Factory:
-                build.draw()
-        self.hover(pygame.mouse.get_pos())
-        self.camera.render(self.game.event_controller.construct_img, self.last_rect)
+            for pos, build in self.map.items():
+                rect = pygame.Rect(
+                    pos[0]*TW - self.camera.x - TW/2,
+                    pos[1]*TH - self.camera.y - TH/2,
+                    build.w*TW, build.h*TH)
+                self.camera.render(build.img, rect, transform=True)
+                if type(build) is Factory:
+                    build.draw()
+            self.hover(pygame.mouse.get_pos())
+            self.camera.render(self.app.event_controller.construct_img, self.last_rect)
 
     def in_tile(self, pos,y=None, rround:bool=False):
         if type(y) in (int,float): pos = pos,y
@@ -41,7 +39,7 @@ class Map:
         else: x,y = pygame.mouse.get_pos()
         tx,ty = self.in_tile(x+self.camera.x,y+self.camera.y, rround=rround)
         return tx,ty
-        
+
     def pos_in_screen(self, pos):
         x,y = pos
         x = int(x/TW)*TW - (self.camera.x%TW)
@@ -84,15 +82,21 @@ class Map:
         self.last_rect = pygame.Rect(x,y, *TILE_SIZE)
         self.last_rect.center = x,y
 
-    def load_map(self, world):
-        for pos, build in world.items():
-            pos = tuple([int(cpos) for cpos in pos.split(",")])
-            if build == "Factory":
-                Factory(pos).construct(buy=False)
-            elif build == "Core":
-                Core(pos).construct(buy=False)
-            elif build == "Generator":
-                Generator(pos).construct(buy=False)
+    def load_map(self, world=None):
+        self.game = get_game()
+        self.camera = self.game.camera
+        self.surf = self.game.surf
+        self.app = self.game.app
+        self.map = {}
+        if world:
+            for pos, build in world.items():
+                pos = tuple([int(cpos) for cpos in pos.split(",")])
+                if build == "Factory":
+                    Factory(pos).construct(buy=False)
+                elif build == "Core":
+                    Core(pos).construct(buy=False)
+                elif build == "Generator":
+                    Generator(pos).construct(buy=False)
 
     def unload_map(self) -> dict:
         unloaded_map = {}

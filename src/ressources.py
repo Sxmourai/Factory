@@ -15,6 +15,8 @@ def font(name:str, extension:str="ttf"):
     return data("font", name+"."+extension)
 
 def imgpath(name:str, extension:str="png"):
+    if extension == "":
+        return data("img", name)
     return data("img", name+"."+extension)
 
 SCALE = 100
@@ -23,19 +25,20 @@ TW, TH = TILE_SIZE
 TILE_IMG = pygame.transform.scale(pygame.image.load(imgpath("tile")), TILE_SIZE)
 TILE_IMG_HOVER = pygame.transform.scale(pygame.image.load(imgpath("tile_selected")), TILE_SIZE)
 
-
+'""'
 
 SCREEN_SIZE = (1000,800)
 
-_game = []
-def set_game(game):
-    _game.clear()
-    _game.append(game)
+_app = []
+def set_app(app):
+    _app.clear()
+    _app.append(app)
 
-get_game = lambda: _game[0]
-get_map = lambda: _game[0].map
-get_surf = lambda: _game[0].surf
-get_manager = lambda: _game[0].manager
+get_app = lambda: _app[0]
+get_game = lambda: get_app().game
+get_map = lambda: get_game().map
+get_surf = lambda: get_app().surf
+get_manager = lambda: get_app().manager
 
 surf_width = lambda: SCREEN_SIZE[0]
 surf_height = lambda: SCREEN_SIZE[1]
@@ -122,6 +125,10 @@ def load(img_path:str, size:tuple[int,int]=None, multiplier:tuple[int,int]=(1,1)
     Returns:
         pygame.Surface: Loaded image
     """
+    treated_path = img_path.split(".")
+    if len(treated_path) > 1 and treated_path[-1] != "png":
+        extension = treated_path[-1]
+        img_path = treated_path[0]
     img_path = imgpath(img_path, extension)
     img = pygame.image.load(img_path)
     if size:

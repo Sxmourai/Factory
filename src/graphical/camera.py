@@ -6,8 +6,10 @@ class Camera:
     def __init__(self, pos:tuple[int,int]) -> None:
         self.x, self.y = pos
         self.surf = get_surf()
-        self.game = get_game()
+        self.game = None
         self.menus = []
+    def start(self):
+        self.game = get_game()
     def move(self, direction:int|float, sprint:bool=False):
         """Moves the camera, in a direction, and if it should sprint
 

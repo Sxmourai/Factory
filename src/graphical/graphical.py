@@ -1,10 +1,10 @@
 from typing import Dict, Iterable, Optional, Tuple, Union
-from pygame_gui.elements import UIButton, UIImage
+from pygame_gui.elements import UIButton, UIImage, UIPanel
 from pygame_gui.ui_manager import UIContainer
 from pygame_gui.core import ObjectID,IContainerLikeInterface, UIElement
 import pygame
 
-from src.ressources import load, get_manager
+from src.ressources import load, get_manager, surf_width, surf_height
 
 class ButtonImage:
     def __init__(self, rect:pygame.Rect, img_path:str|UIImage|pygame.Surface, text:str="", container=None,
@@ -33,8 +33,17 @@ class ButtonLogo:
         image_rect.h = relative_rect.h * .7
         image_rect.center = relative_rect.w/2, relative_rect.h/2
         self.imageLogo = UIImage(image_rect, load(img_path), self.manager, container=self.container)
+        self.id = object_id
 
 class BackButton:
     def __init__(self, rect:pygame.Rect|tuple,container, obj_id, tool_tip_text:str, anchors:dict) -> None:
         self.manager = get_manager()
         self.button = UIButton(rect, "Back", self.manager, container, tool_tip_text, object_id=obj_id, anchors=anchors)
+
+class ConstructButton:
+    def __init__(self, img_path, text, tooltip_text) -> None:
+        self.manager = get_manager()
+        rect = pygame.Rect(0,0,surf_width()*.7,surf_height()*.7)
+        self.container = UIContainer(rect,self.manager)
+        self.button = UIButton(rect, text, self.manager, self.container, tooltip_text, anchors={"centerx","centerx"})
+        self.img = UIImage(pygame.Rect(0,0,40,40),load(img_path,(40,40)),self.manager, container=self.container, anchors={"centery", "centery"})

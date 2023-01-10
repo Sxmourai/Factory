@@ -1,6 +1,7 @@
 import json
+from time import time
 import pygame
-from pygame_gui.elements import UITextBox, UIButton, UIPanel, UILabel, UIScrollingContainer
+from pygame_gui.elements import UITextBox, UIButton, UIPanel, UILabel, UIScrollingContainer, UITextEntryLine, UIImage
 from pygame_gui.core import ObjectID
 from pygame_gui.ui_manager import UIContainer
 from os import listdir
@@ -10,33 +11,37 @@ from abc import ABC, abstractmethod
 
 
 from src.graphical.graphical import ButtonLogo
-from src.graphical.gui import ConstructMenu
-from src.ressources import data, font, get_game, load, gen, surf_height, surf_width, GAME_TITLE
+from src.world.buildings import Factory,Core, Generator
+# from src.graphical.gui import ConstructMenu
+from src.ressources import data, font, get_app, load, gen, surf_height, surf_width, GAME_TITLE
 
 CONTAINER = gen(400,400)
 BUTTONR = (50,50)
 
 class BasicMenu(ABC):
     def __init__(self, controller) -> None:
-        self.game = get_game()
-        self.manager = self.game.manager
+        self.app = get_app()
+        self.game = self.app.game
+        self.manager = self.app.manager
         self.controller = controller
 
     @property
     def visible(self): return self.container.visible
-    def hide(self):
-        self.controller.last_menu = self
-        self.container.hide()
-    def show(self):self.container.show()
+    def hide(self):self.container.hide() 
+    def _show(self):self.container.show()
+    def show(self):self.controller.menu = self
     def toggle(self): self.hide() if self.visible else self.show()
+    def handle_click(self, button_id:str):
+        if button_id == "@back_button":
+            self.controller.back()
 
 
 class SimpleMenu(BasicMenu):
     def __init__(self, controller,static:bool=True, centered_big:bool=False) -> None:
         super().__init__(controller)
         self.static = static
-        if self.static:self.game.camera.menus.append(self)
-        if centered_big: self.container = UIContainer(pygame.Rect(0,0, surf_width()*.7, surf_height()*.7),self.manager, anchors={"center":"center"})
+        if self.static:self.app.camera.menus.append(self)
+        if centered_big: self.container = UIContainer(pygame.Rect(0,0, 700, 600),self.manager, anchors={"center":"center"})
 
 
 class Stats(SimpleMenu):
@@ -92,11 +97,12 @@ class Commands(SimpleMenu):
         self.container.relative_right_margin = 0
         self.container.relative_bottom_margin = 0
         self.commands = [] # order: button
-        self.construct_menu = ConstructMenu()
-        self.commands.append(ButtonLogo("commands\\hammer", pygame.Rect(0,0,40,40), self.container, object_id="@construction"))
+        self.construct_menu = ConstructMenu(self.controller)
+        self.add_button("commands/hammer",self.construct_menu.toggle)
         self.panels = []
         self.c_gui = None
-    def add_button(self, img_path:str, func) -> UIButton:
+
+    def add_button(self, img_path:str, func, id:str=None) -> UIButton:
         """Creates a Button on the menu
 
         Args:
@@ -106,29 +112,20 @@ class Commands(SimpleMenu):
         Returns:
             UIButton: Button object (set into self.commands[-1][0])
         """
-        if img_path:
-            pass#print("Useless for now")
-        button = UIButton(pygame.Rect(0,0,40,40), "", self.manager, self.container)
-
-
+        if id:
+            button = ButtonLogo(img_path, pygame.Rect(0,40*len(self.commands),40,40), self.container, object_id=id)
+        else:
+            id = len(self.commands)
+            button = ButtonLogo(img_path, pygame.Rect(0,40*len(self.commands),40,40), self.container, object_id=str(id))
         self.commands.append((button, func))
         return button
-    def handle_click_event(self, event):
-        """Handle a click event for the UIButtons
-        Args:
-            event (_type_): Click event
-        """
-        for i,packer in enumerate(self.commands):
-            # button, func = packer
-            if event.ui_element.object_ids[-1] == "@construction": self.construct_menu.toggle()
-        self.construct_menu.handle_event(event)
 
-    def construct_panel(self):
-        """Opens the construct panel"""
-        if self.c_gui is None:
-            self.c_gui = ConstructPan()
-        elif isinstance(self.c_gui, ConstructPan):
-            self.c_gui = None
+    def handle_click(self, button_id: str):
+        for button,func in self.commands:
+            if button_id == button.id:
+                func()
+                return
+        self.construct_menu.handle_click(button_id)
 
 class GlobalMenu(BasicMenu):
     def __init__(self,controller) -> None:
@@ -136,10 +133,15 @@ class GlobalMenu(BasicMenu):
         self.screen_rect = pygame.Rect(0,0,surf_width(),surf_height())
         container_rect = self.screen_rect.copy()
         container_rect.size = container_rect.w*.6, container_rect.h*.6
-        self.container = UIPanel(container_rect,manager=self.manager, object_id="@start_panel", anchors={"center":"center"})
-        self.background = load("start_background", (surf_width(), surf_height()), extension="jpg")
+        self.container = UIPanel(container_rect,2,manager=self.manager, anchors={"center":"center"})
+        self.background = UIImage(pygame.Rect(0,0,surf_width(), surf_height()),load("start_background", (surf_width(), surf_height()), extension="jpg"),self.manager)
         self.title = UILabel(pygame.Rect(0, 10, -1, -1), GAME_TITLE, self.manager, self.container, anchors={"center":"centerx", "top":"top"}, object_id="@game_title")
-
+    def hide(self):
+        super().hide()
+        self.background.hide()
+    def show(self):
+        super().show()
+        self.background.show()
 
 class StartMenu(GlobalMenu):
     def __init__(self, controller) -> None:
@@ -148,13 +150,13 @@ class StartMenu(GlobalMenu):
         self.load = UIButton(pygame.Rect(100,30,200,80), "Load", self.manager,self.container, "Click to load a game", object_id="@load_button", anchors={'center': 'center'})
         self.quit = UIButton(pygame.Rect(0,120,200,80), "Quit", self.manager,self.container, "Click to quit", object_id="@quit_button", anchors={'center': 'center'})
 
-    def draw(self):
-        if self.game.started is False:
-            self.game.menu_controller.commands.hide()
-            self.game.surf.blit(self.background, self.screen_rect)
-        else:
-            self.container.hide()
-            self.game.menu_controller.commands.show()
+    def handle_click(self, button_id: str):
+        super().handle_click(button_id)
+        if button_id == "@start_button":
+            self.app.start()
+        elif button_id == "@load_button":
+            self.controller.load_menu.show()
+
 class LoadMenu(GlobalMenu):
     def __init__(self,controller) -> None:
         super().__init__(controller)
@@ -164,10 +166,14 @@ class LoadMenu(GlobalMenu):
             self.games.append((UIButton(pygame.Rect(0, 15+55*i, 400, 50),game.title, self.manager, self.games_container, anchors={"centerx":"centerx"}), game))
         self.back = UIButton(pygame.Rect(0,-100,200,80), "Back", self.manager,self.container, "Click to go back", object_id="@back_button", anchors={'centerx': 'centerx','bottom':'bottom'})
         self.hide()
-        
-    def handle_click(self, event):
+
+    def show(self):
+        super().show()
+
+    def handle_click(self, button_id:str):
+        super().handle_click(button_id)
         for game in self.games:
-            if event.ui_element == game[0]:
+            if button_id == f"@{game[0]}":
                 self.load_game(game[1])
 
     def get_games_saves(self):
@@ -180,54 +186,30 @@ class LoadMenu(GlobalMenu):
                 except json.decoder.JSONDecodeError:
                     print(f"Couldn't open {data('saves',file)}. The file is corrupted")
 
-    def draw(self):
-        if self.game.started is False:
-            self.game.menu_controller.commands.hide()
-            self.game.surf.blit(self.background, self.screen_rect)
-        else:
-            self.container.hide()
-            self.game.menu_controller.commands.show()
-
     def load_game(self, game):
         self.game.map.load_map(game.map)
-        self.game.menu_controller.stats.points = game.stats["points"]
-        self.game.menu_controller.stats.research = game.stats["research"]
-        self.game.start()
+        self.app.menu_controller.stats.points = game.stats["points"]
+        self.app.menu_controller.stats.research = game.stats["research"]
+        self.app.start()
 
 class TitleScreen(GlobalMenu):
     def __init__(self,controller) -> None:
         super().__init__(controller)
+        UIButton(pygame.Rect(0,0,100,100),"Hello", self.manager, self.container, "aaaa", 3)
         self.q_save = UIButton(pygame.Rect(-100,120,200,80), "Save & quit", self.manager,self.container, "Click to save & quit", object_id="@quit_save_button", anchors={'center': 'center'})
         self.q_lost = UIButton(pygame.Rect(100,120,200,80), "Quit without saving", self.manager,self.container, "Click to quit without saving", object_id="@quit_button", anchors={'center': 'center'})
         self.hide()
         self.saving = False
     def save(self):
-        self.game.menu_controller.prompt("Name of save: ")
+        self.app.menu_controller.prompt("Name of save: ")
         self.saving = True
+    def handle_click(self, button_id:str):
+        super().handle_click(button_id)
+        if button_id == "@quit_button":
+            self.app.exit()
+        elif button_id == "@quit_save_button":
+            self.save()
 
-
-class Panel:
-    """Panel object, used by the menus"""
-    def __init__(self, imgpath:str, title:str):
-        self.game = get_game()
-        self.manager = self.game.manager
-        self.img = load(imgpath, CONTAINER.size)
-        self._text = title
-        self.buttons = []
-        self.panel = UIPanel(CONTAINER, 1, self.manager)
-        self.panel.set_image(load(imgpath,CONTAINER.size))
-    def button(self, text:str) -> UIButton:
-        """Adds a UIButton to the panel
-
-        Args:
-            text (str): Text of the button
-
-        Returns:
-            UIButton: _description_
-        """
-        button = UIButton(BUTTONR, text, self.manager, self.panel)
-        self.buttons.append(button)
-        return button
 
 class GameSave:
     def __init__(self, save) -> None:
@@ -246,14 +228,70 @@ class GameSave:
             json.dump(self.raw, f)
 
 
-class ConstructPan(Panel):
-    """Derived panel"""
-    def __init__(self):
-        super().__init__("guis/construct", "Construct")
+class AlertContainer(UIPanel, BasicMenu):
+    def __init__(self) -> None:
+        self.manager = get_app().manager
+        super().__init__(pygame.Rect(0, -300, 300, 100), manager=self.manager,anchors={"center":"center"}, margins={"left":0,"right":0,"top":0,"bottom":0})
+        self.text = UILabel(pygame.Rect(0,0, 300,20), "", self.manager, self,object_id="@alert_label",anchors={"centerx":"centerx"})
+        self.input = UITextEntryLine(pygame.Rect(5,-36, 200, 30),self.manager,self, anchors={"bottom":"bottom"})
+        self.button = UIButton(pygame.Rect(-80,-36, 70,30),"Send",self.manager,self, anchors={"bottom":"bottom","right":"right"},object_id="@prompt_submit")
+        self.hide()
+        self._time = None
 
+    def alert(self, text):
+        self.text.set_text(text)
+        self.show()
+        self.input.hide()
+        self._time = time()
 
+    def prompt(self, text) -> str:
+        self.alert(text)
+        self.input.show()
 
+    def check_hiding(self):
+        if self._time and time()-self._time > 3 and not self.input.visible:
+            self.hide()
+            self._time = None
 
+class ConstructMenu(SimpleMenu):
+    def __init__(self, controller) -> None:
+        super().__init__(controller, False)
+        self.container = UIPanel(pygame.Rect(0,0,surf_width()*.7,surf_height()*.7),2,self.manager, anchors={"center":"center"})
+        self.buttons = []
+        self.hide()
+
+    def start(self):
+        buildings = [Factory, Core, Generator]
+        for building in buildings:
+            self.add_building(building)
+
+    def add_building(self, building):
+        self.button(building.IMG_PATH, building.TITLE,
+                    building.DESCRIPTION, self.app.event_controller.enter_construction_mode, building)
+
+    def button(self, img_path:str|UIImage, text:str, description:str="", func=None, *args) -> int:
+        p_width = self.container.rect.w
+        w,h = p_width*.8,70
+
+        rect = pygame.Rect(10,30+len(self.buttons)*h, w,h)
+        container = UIContainer(rect, self.manager, container=self.container, anchors={"centerx":"centerx"})
+        button_container = UIButton(pygame.Rect(0,0,*rect.size),"",self.manager,container, description, object_id=text)
+
+        label_rect = pygame.Rect(0,5, 100, 20)
+        label_rect.centerx = w/2+15
+
+        button_container.title = UILabel(label_rect, text, self.manager, container=container)
+        descr_rect = pygame.Rect(0, 20, w*.8, h-20)
+        descr_rect.centerx = w/2+15
+        button_container.description = UITextBox(f"<font size=2.5>{description}</font>", descr_rect, self.manager, container=container, object_id="#construct_desc")
+
+        self.buttons.append((text, func, args))
+        return button_container
+
+    def handle_click(self, button_id):
+        for bid,func,args in self.buttons:
+            if button_id == bid:
+                func(*args)
 # class Menu(Sprite):
 #     def __init__(self, pos: tuple | None, size: tuple, imgpath):
 #         super().__init__(pos, size, imgpath)
