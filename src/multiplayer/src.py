@@ -1,6 +1,0 @@
-# One char max !!!
-PLAYER_MOVEMENT = "P"
-TILE_CHANGE = "C"
-MAP_INITIALISATION = "M"
-MARKER = "|"
-END = "*"

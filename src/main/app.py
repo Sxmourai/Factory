@@ -7,21 +7,22 @@ from src.graphical.camera import Camera
 from src.main.game import Game
 from src.main.menu import MenuController
 from src.ressources import data, set_app
+from src.server.client import Client
 
 class Application:
     def __init__(self, screen_size) -> None:
         set_app(self)
         pygame.init()
         pygame.display.set_caption('Factory game')
+        self.started = False
         self.surf = pygame.display.set_mode(screen_size)
         self.manager = UIManager(screen_size, data(
             "themes","theme.json"), resource_loader=IncrementalThreadedResourceLoader())
-        self.camera = Camera((0, 0))
         self.game = Game()
         self.clock = (pygame.time.Clock(), 60)
         self.menu_controller = MenuController()
         self.event_controller = EventController()
-        self.started = False
+        self.client = Client(self)
 
     def run(self, events=None, keys=None):
         self.draw()
@@ -43,7 +44,6 @@ class Application:
             self.started = True
             self.game.start()
             self.menu_controller.start()
-            self.camera.start()
     def stop(self):
         if self.started is True:
             self.started = False
@@ -51,5 +51,7 @@ class Application:
             self.menu_controller.stop()
 
     def exit(self):
+        if self.client.disconnect is False: self.client.disconnect()
+        self.menu_controller.multi_menu.save_servers()
         pygame.quit()
         exit()

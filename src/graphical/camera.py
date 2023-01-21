@@ -1,13 +1,40 @@
 import pygame
 from src.graphical.menu import Stats
+from src.graphical.player import Player
 from src.ressources import get_vec, get_game, sysFont, get_surf
 class Camera:
     """Camera object for game"""
-    def __init__(self, pos:tuple[int,int]) -> None:
-        self.x, self.y = pos
+    def __init__(self) -> None:
         self.surf = get_surf()
         self.game = None
         self.menus = []
+        self.players = []
+
+    @property
+    def x(self):return self.player.x
+    @property
+    def y(self):return self.player.y
+
+    def load_players(self, players:list, pos:tuple[float|int,float|int]):
+        self.player = Player(pos, "Me")
+        self.players.append(self.player)
+        for player in players:
+            self.players.append(Player(player[1], player[0]))
+
+    def disconnect_players(self, players:list):
+        for player in players:
+            print(player)
+            if player in self.players:self.players.remove(player)
+
+    def move_players(self, players_moves:list):
+        for move in players_moves:
+            print(move)
+
+    def draw_players(self):
+        for player in self.players:
+            self.render(player.img, player.pos, True)
+            self.render_text(player.pseudo, 10, (player.x, player.y-50), color=(255,255,255))
+
     def start(self):
         self.game = get_game()
     def move(self, direction:int|float, sprint:bool=False):
@@ -19,8 +46,8 @@ class Camera:
         """
         speed = 3*2 if sprint else 3
         velo_x,velo_y = get_vec(speed, direction)
-        self.x += velo_x
-        self.y += velo_y
+        self.player.x += velo_x
+        self.player.y += velo_y
 
     def render(self, img:pygame.Surface,pos_or_rect:tuple[int,int]|pygame.Rect, transform:bool|tuple[bool,bool]=False):
         """Renders an image at specified coordinates or rect
@@ -48,7 +75,7 @@ class Camera:
                           font_size_or_pos:int|tuple[int],
                           pos:tuple[int,int]=None,
                           color:tuple[int,int,int]=(0,0,0),
-                          center:bool=True) -> tuple:
+                          transform:bool=True) -> tuple:
         """Renders text on self.surf
 
         Args:
@@ -70,10 +97,10 @@ class Camera:
         else:
             text = sysFont(font_size_or_pos).render(str(text), True, color)
             text_rect = text.get_rect()
-        if center:
-            text_rect.center = pos
-        else:
-            text_rect.x, text_rect.y = pos
+        
+        if transform:text_rect.center = pos
+        else:text_rect.x, text_rect.y = pos
+        
         self.surf.blit(text, text_rect)
         return (text, text_rect)
     def render_text_rect(self, text:pygame.Surface,

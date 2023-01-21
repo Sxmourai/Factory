@@ -17,13 +17,18 @@ class EventController:
 
 
     def handle_events(self, events) -> bool:
+        pressed_button = False
+        for event in events:
+            self.app.manager.process_events(event)
+            if event.type == UI_BUTTON_PRESSED:pressed_button = True
+
         for event in events:
             if event.type == pygame.QUIT:
                 return False
             elif event.type == UI_BUTTON_PRESSED:
                 self.app.menu_controller.handle_button_click_event(event)
             elif self.app.started:
-                if event.type == pygame.MOUSEBUTTONUP:
+                if event.type == pygame.MOUSEBUTTONUP and pressed_button:
                     self.handle_click_event(event)
                 if event.type == pygame.KEYDOWN:
                     self.handle_keydown(event.key)
@@ -64,7 +69,7 @@ class EventController:
         Args:
             keys (dict): Keys pressed by player
         """
-        if keys:
+        if keys and self.app.started:
             if keys[pygame.K_UP]:
                 self.camera.move(180, keys[pygame.K_SPACE])
             if keys[pygame.K_DOWN]:

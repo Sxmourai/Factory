@@ -6,6 +6,10 @@ pygame.display.set_caption('Factory game')
 app = Application((1000,800))
 RUNNING = True
 while RUNNING:
-    RUNNING = app.run()
+    try:
+        RUNNING = app.run()
+    except KeyboardInterrupt:
+        app.exit()
+
 
 pygame.quit()

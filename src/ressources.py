@@ -5,27 +5,12 @@ import pygame
 GAME_TITLE = "Fusion"
 PATH = str(Path(".").cwd())+"\\src\\"
 
-def data(*paths):
-    applied_path = PATH+"data"
-    for path in paths:
-        applied_path += f"\\{path}"
-    return applied_path
-
-def font(name:str, extension:str="ttf"):
-    return data("font", name+"."+extension)
-
-def imgpath(name:str, extension:str="png"):
-    if extension == "":
-        return data("img", name)
-    return data("img", name+"."+extension)
-
 SCALE = 100
 TILE_SIZE = (int(.3*SCALE), int(.3*SCALE))
 TW, TH = TILE_SIZE
-TILE_IMG = pygame.transform.scale(pygame.image.load(imgpath("tile")), TILE_SIZE)
-TILE_IMG_HOVER = pygame.transform.scale(pygame.image.load(imgpath("tile_selected")), TILE_SIZE)
+TILE_IMG = pygame.transform.scale(pygame.image.load(PATH+"data\\img\\tile.png"), TILE_SIZE)
+TILE_IMG_HOVER = pygame.transform.scale(pygame.image.load(PATH+"data\\img\\tile_selected.png"), TILE_SIZE)
 
-'""'
 
 SCREEN_SIZE = (1000,800)
 
@@ -33,9 +18,14 @@ _app = []
 def set_app(app):
     _app.clear()
     _app.append(app)
+_game = []
+def set_game(game):
+    _game.clear()
+    _game.append(game)
+def get_app():
+    return _app[0]
 
-get_app = lambda: _app[0]
-get_game = lambda: get_app().game
+get_game = lambda: _game[0]
 get_map = lambda: get_game().map
 get_surf = lambda: get_app().surf
 get_manager = lambda: get_app().manager
@@ -112,6 +102,20 @@ def apply_vec(origin, hyp, orientation):
 def get_vec(hyp, orientation):
     rad = radians(orientation)
     return sin(rad)*hyp, cos(rad)*hyp
+
+def data(*paths):
+    applied_path = PATH+"data"
+    for path in paths:
+        applied_path += f"\\{path}"
+    return applied_path
+
+def font(name:str, extension:str="ttf"):
+    return data("font", name+"."+extension)
+
+def imgpath(name:str, extension:str="png"):
+    if extension == "":
+        return data("img", name)
+    return data("img", name+"."+extension)
 
 def load(img_path:str, size:tuple[int,int]=None, multiplier:tuple[int,int]=(1,1), tile:bool=False, extension:str="png") -> pygame.Surface:
     """Loads an image

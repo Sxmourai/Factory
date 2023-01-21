@@ -7,7 +7,7 @@ from pygame_gui.elements import UILabel, UITextEntryLine, UIButton
 
 from src.graphical.camera import Camera
 from src.world.world import Map
-from src.ressources import load, get_app, TILE_IMG_HOVER, sc_center, surf_height
+from src.ressources import load, get_app, TILE_IMG_HOVER, sc_center, set_game
 from src.graphical.gui import ConstructMenu
 from src.world.buildings import Factory, Core, Building
 from src.graphical.menu import Commands, GameSave, Stats
@@ -21,12 +21,14 @@ class Game:
     PLAYER_IMAGE = load("player", PLAYER_SIZE)
 
     def __init__(self):
+        set_game(self)
         self.app = get_app()
-        self.manager = self.app.manager
-        self.camera = self.app.camera
         self.surf = self.app.surf
+        self.manager = self.app.manager
+        self.camera = Camera()
         self.map = Map()
         self._multiplier = 1
+        self.started = self.app.started
 
     def run(self):
         self.draw()
@@ -41,12 +43,16 @@ class Game:
 
     def draw(self):
         """Draws the elements of the game (tiles, player, buildings, menus etc)"""
-        self.map.draw()
-        self.camera.render(self.PLAYER_IMAGE, sc_center())
+        if self.started:
+            self.map.draw()
+            self.camera.render(self.PLAYER_IMAGE, sc_center())
 
     def start(self, world=None):
         self.map.load_map(world)
-
+        self.camera.start()
+        self.started = True
+    def stop(self):
+        self.started = False
     def factory(self, pos: tuple[int, int], tier: int) -> Factory:
         """Creates a new factory"""
         return Factory(pos, tier)

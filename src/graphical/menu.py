@@ -1,7 +1,7 @@
 import json
 from time import time
 import pygame
-from pygame_gui.elements import UITextBox, UIButton, UIPanel, UILabel, UIScrollingContainer, UITextEntryLine, UIImage
+from pygame_gui.elements import UITextBox, UIButton, UIPanel, UILabel, UIScrollingContainer, UITextEntryLine, UIImage, UIWindow
 from pygame_gui.core import ObjectID
 from pygame_gui.ui_manager import UIContainer
 from os import listdir
@@ -34,13 +34,15 @@ class BasicMenu(ABC):
     def handle_click(self, button_id:str):
         if button_id == "@back_button":
             self.controller.back()
+        if button_id == "@quit_button":
+            self.app.exit()
 
 
 class SimpleMenu(BasicMenu):
     def __init__(self, controller,static:bool=True, centered_big:bool=False) -> None:
         super().__init__(controller)
         self.static = static
-        if self.static:self.app.camera.menus.append(self)
+        if self.static:self.game.camera.menus.append(self)
         if centered_big: self.container = UIContainer(pygame.Rect(0,0, 700, 600),self.manager, anchors={"center":"center"})
 
 
@@ -146,14 +148,14 @@ class GlobalMenu(BasicMenu):
 class StartMenu(GlobalMenu):
     def __init__(self, controller) -> None:
         super().__init__(controller)
-        self.start = UIButton(pygame.Rect(-100,30,200,80), "Start", self.manager,self.container, "Click to start a new game", object_id="@start_button", anchors={'center': 'center'})
-        self.load = UIButton(pygame.Rect(100,30,200,80), "Load", self.manager,self.container, "Click to load a game", object_id="@load_button", anchors={'center': 'center'})
+        self.multi = UIButton(pygame.Rect(-100,30,200,80), "Multiplayer", self.manager,self.container, "Click to connect to a server", object_id="@multi_button", anchors={'center': 'center'})
+        self.load = UIButton(pygame.Rect(100,30,200,80), "Load Save", self.manager,self.container, "Click to load a game", object_id="@load_button", anchors={'center': 'center'})
         self.quit = UIButton(pygame.Rect(0,120,200,80), "Quit", self.manager,self.container, "Click to quit", object_id="@quit_button", anchors={'center': 'center'})
 
     def handle_click(self, button_id: str):
         super().handle_click(button_id)
-        if button_id == "@start_button":
-            self.app.start()
+        if button_id == "@multi_button":
+            self.controller.multi_menu.show()
         elif button_id == "@load_button":
             self.controller.load_menu.show()
 
@@ -192,23 +194,93 @@ class LoadMenu(GlobalMenu):
         self.app.menu_controller.stats.research = game.stats["research"]
         self.app.start()
 
+class MultiMenu(GlobalMenu):
+    def __init__(self,controller) -> None:
+        super().__init__(controller)
+        self.servers_button = []
+        self.servers_container = UIScrollingContainer(pygame.Rect(0,0,self.container.rect.w, self.container.rect.h*.6),self.manager, container=self.container)
+        self.add_server_button = UIButton(pygame.Rect(40,-175,250,60), "Add a server", self.manager,self.container, "Click to add a new server", object_id="@add_server_button", anchors={'bottom':'bottom'})
+        self.add_server_popup = UIWindow(pygame.Rect(0,0,400,400),self.manager, "Add a new server", visible=False)
+        self.add_server_ip = UITextEntryLine(pygame.Rect(0,30,280,50),self.manager,self.add_server_popup, anchors={"centerx":"centerx"}, placeholder_text="Ip address of the server")
+        self.add_server_submit = UIButton(pygame.Rect(0,-100,300,60),"Add",self.manager,self.add_server_popup, "Click to add the server", object_id="@add_server_submit_button",anchors={"centerx":"centerx","bottom":"bottom"})
+
+        self.back = UIButton(pygame.Rect(0,-100,200,80), "Back", self.manager,self.container, "Click to go back", object_id="@back_button", anchors={'centerx': 'centerx','bottom':'bottom'})
+        self.hide()
+        
+        path = data("servers.json")
+        try:
+            with open(path, "r") as f:
+                self.servers = f.read()[1:-1].split(",")
+                for i in range(len(self.servers)):
+                    self.servers[i] = self.servers[i][1:-1]
+                
+        except (json.decoder.JSONDecodeError,FileNotFoundError):
+            print(f"Couldn't open {path}. The file is corrupted or deleted")
+            self.servers = []
+        for i,server in enumerate(self.servers):
+            self.servers_button.append((UIButton(pygame.Rect(0, 15+55*i, 400, 50),server, self.manager, self.servers_container, anchors={"centerx":"centerx"},object_id=server), server))
+
+    def save_servers(self):
+        path = data("servers.json")
+        with open(path, "w") as f:
+            f.write(str(self.servers))
+
+
+    def handle_click(self, button_id:str):
+        super().handle_click(button_id)
+        if button_id == self.add_server_button.object_ids[-1]:self.add_server_popup.show()
+        elif button_id == self.add_server_submit.object_ids[-1]:self.add_server(self.add_server_ip.get_text());self.add_server_popup.hide()
+        else:
+            for button, server_ip in self.servers_button:
+                if button_id == server_ip:
+                    self.app.client.connect_to_server(server_ip)
+
+    def connect_to(self, server_ip:str):
+        print("Connecting to "+server_ip)
+
+    def add_server(self, server_ip:str):
+        self.servers.append(server_ip)
+        self.servers_button.append((UIButton(pygame.Rect(0, 15+55*len(self.servers_button), 400, 50),server_ip, self.manager, self.servers_container, anchors={"centerx":"centerx"},object_id=server_ip), server_ip))
+
+
+    def load_game(self, game):
+        self.game.map.load_map(game.map)
+        self.app.menu_controller.stats.points = game.stats["points"]
+        self.app.menu_controller.stats.research = game.stats["research"]
+        self.app.start()
+
 class TitleScreen(GlobalMenu):
     def __init__(self,controller) -> None:
         super().__init__(controller)
         UIButton(pygame.Rect(0,0,100,100),"Hello", self.manager, self.container, "aaaa", 3)
         self.q_save = UIButton(pygame.Rect(-100,120,200,80), "Save & quit", self.manager,self.container, "Click to save & quit", object_id="@quit_save_button", anchors={'center': 'center'})
         self.q_lost = UIButton(pygame.Rect(100,120,200,80), "Quit without saving", self.manager,self.container, "Click to quit without saving", object_id="@quit_button", anchors={'center': 'center'})
+        self.disconnect = UIButton(pygame.Rect(0,120,200,80), "Disconnect", self.manager,self.container, "Click to disconnect from server", object_id="@disconnect_button", anchors={'center': 'center'}, visible=False)
         self.hide()
         self.saving = False
+    def show(self):
+        super().show()
+        if self.app.client.connected:
+            self.disconnect.show()
+            self.q_lost.hide()
+            self.q_save.hide()
+        else:
+            self.disconnect.hide()
+            self.q_lost.show()
+            self.q_save.show()
+        
     def save(self):
         self.app.menu_controller.prompt("Name of save: ")
         self.saving = True
+        
     def handle_click(self, button_id:str):
         super().handle_click(button_id)
         if button_id == "@quit_button":
             self.app.exit()
         elif button_id == "@quit_save_button":
             self.save()
+        elif button_id == "@disconnect_button":
+            self.app.client.disconnect()
 
 
 class GameSave:
@@ -321,3 +393,4 @@ class ConstructMenu(SimpleMenu):
 #         self.buttons[pos] = Button(*args, **kwargs)
 #     def add_menu(self,pos:tuple, size, imgpath):
 #         self.menus[pos] = Menu(pos, size, imgpath)
+

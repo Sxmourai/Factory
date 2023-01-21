@@ -83,6 +83,7 @@ class Map:
         self.last_rect.center = x,y
 
     def load_map(self, world=None):
+        if not world and self.map: return
         self.game = get_game()
         self.camera = self.game.camera
         self.surf = self.game.surf
@@ -110,3 +111,6 @@ class Map:
                 b_title = "Generator"
             unloaded_map[f"{pos[0]},{pos[1]}"] = b_title
         return unloaded_map
+    def handle_map_change(self, changes):
+        if not changes:return
+        print("Map changed",changes)

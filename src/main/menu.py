@@ -1,7 +1,7 @@
 from time import time
 import pygame
 from src.graphical.gui import ConstructMenu
-from src.graphical.menu import AlertContainer, Commands, LoadMenu, StartMenu, Stats, TitleScreen
+from src.graphical.menu import AlertContainer, Commands, LoadMenu, MultiMenu, StartMenu, Stats, TitleScreen
 from src.ressources import get_app
 
 from pygame_gui.core import ObjectID
@@ -14,13 +14,14 @@ class MenuController:
         self.app = get_app()
         self.game = self.app.game
         self.manager = self.app.manager
-        self.camera = self.app.camera
+        self.camera = self.game.camera
         self.start_menu = StartMenu(self)
         self.load_menu = LoadMenu(self)
         self.stats = Stats(self)
         self.title_screen = TitleScreen(self)
         self.commands = Commands(self)
         self.alert_container = AlertContainer()
+        self.multi_menu = MultiMenu(self)
         self._menu = self.start_menu
         self._last = None
         self.statics = [self.commands, self.stats]
@@ -39,7 +40,7 @@ class MenuController:
         for building in buildings:
             self.commands.construct_menu.add_building(building)
 
-    def stop(self):self.hide_menu()
+    def stop(self):self.hide_menu();self.start_menu.show()
     def alert(self,text):self.alert_container.alert(text)
     def prompt(self,text):self.alert_container.prompt(text)
 
@@ -54,7 +55,6 @@ class MenuController:
 
     def handle_button_click_event(self, event):
         button_id = event.ui_element.object_ids[-1]
-        print("menu: "+str(self.menu))
         if self.menu:
             self.menu.handle_click(button_id)
         else:
@@ -89,8 +89,7 @@ class MenuController:
 
     def back(self):
         self.menu.hide()
-        self.menu = self._last
-        self.menu._show()
+        self._last.show()
 
     def hide_menu(self):
         self._last = self.menu
