@@ -45,10 +45,9 @@ class Game:
         """Draws the elements of the game (tiles, player, buildings, menus etc)"""
         if self.started:
             self.map.draw()
-            self.camera.render(self.PLAYER_IMAGE, sc_center())
+            self.camera.draw_players()
 
-    def start(self, world=None):
-        self.map.load_map(world)
+    def start(self):
         self.camera.start()
         self.started = True
     def stop(self):

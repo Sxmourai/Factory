@@ -1,9 +1,11 @@
 import socket
 from socket import AF_INET, SOCK_STREAM
+from src.graphical.player import Player
 from src.server.server import Server
 from src.server.parser import Parser
 from time import sleep
 from threading import Thread
+from random import sample
 
 class Client:
     def __init__(self, app) -> None:
@@ -17,13 +19,22 @@ class Client:
             self.sock.connect(Parser.parse_ip(server_ip))
         except ConnectionRefusedError:return
         print("Getting the initialization")
-        init_instructions = self.sock.recv(2048).decode("utf-8")
+        while True:
+            init_instructions = self.sock.recv(2048).decode("utf-8")
+            if init_instructions:break
         print("Parse",init_instructions)
-        map, players, self_pos = Parser.parse_initialization(init_instructions)
-        print("Start at",self_pos)
+        map, players_move, self_pos = Parser.parse_initialization(init_instructions)
+        
+        if self_pos: 
+            if self.app.game.camera.player:
+                self.app.game.camera.player.pos = self_pos
+            else:
+                self.app.game.camera.player = Player(self_pos, "".join(sample("abcdefghijklmnopqrstuvwxyz",10)))
+        
+        self.sock.send(Parser.create_pseudo(self.app.game.camera.player.pseudo).encode("utf-8"))
         self.app.game.map.load_map(map)
-        self.app.game.camera.load_players(players, self_pos)
-        self.app.game.camera.player.pos = self_pos
+        # print("Start",players_move)
+        self.app.game.camera.move_players(players_move)
         self.app.start()
         self.connected = True
         Thread(target=self.get_instructions).start()
@@ -38,8 +49,9 @@ class Client:
                 raw_instructions = self.sock.recv(1024).decode('utf-8')
                 if Parser.should_disconnect(raw_instructions, self.sock.getsockname()):self.disconnect();return
                 disconnected_players,players_movements,build_changes = Parser.parse(raw_instructions)
-                print("Got",disconnected_players,players_movements,build_changes)
+                print("Got",disconnected_players,build_changes)
                 self.app.game.camera.disconnect_players(disconnected_players)
+                # print(players_movements)
                 self.app.game.camera.move_players(players_movements)
                 self.app.game.map.handle_map_change(build_changes)
             except (ConnectionResetError, ConnectionAbortedError):
@@ -57,10 +69,9 @@ class Client:
             elif build_cond:
                 print("sending !")
                 self.last_map = self.app.game.map.map
-            sleep(.1)
+            sleep(.01)
 
     def disconnect(self):
-        print("Disconnecting from server...")
         try:
             self.sock.send(Parser.create_disconnect().encode("utf-8"))
         except (ConnectionResetError,OSError):print("Connection to server closed.")

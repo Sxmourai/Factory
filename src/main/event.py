@@ -24,6 +24,8 @@ class EventController:
 
         for event in events:
             if event.type == pygame.QUIT:
+                self.app.client.disconnect()
+                self.app.exit()
                 return False
             elif event.type == UI_BUTTON_PRESSED:
                 self.app.menu_controller.handle_button_click_event(event)

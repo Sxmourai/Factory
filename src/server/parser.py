@@ -17,29 +17,34 @@ from typing import Any
 
 class Parser:
     @staticmethod
-    def create_initialization(map:dict, players:dict, player_pos:tuple[float,float]|tuple[int,int]):
+    def create_initialization(map:dict, players:tuple, player_pos:tuple[float,float]|tuple[int,int]):
         parsed = ""
         parsed += f"{INIT_MARKER}Map{MODE_DELIMITER}{map}{END_DELIMITER}"
-        parsed += f"{INIT_MARKER}Players{MODE_DELIMITER}{players}{END_DELIMITER}"
+        for player in players:
+            parsed += f"{PLAYER_MOVEMENT}{player[0]}{MODE_DELIMITER}{player[1]}{END_DELIMITER}"
         parsed += f"{INIT_MARKER}Pos{MODE_DELIMITER}{player_pos[0]},{player_pos[1]}{END_DELIMITER}"
         return parsed
+
     @staticmethod
     def parse_initialization(instructions:str) -> list:
-                #Map    Players   Pos of player
-        parsed = [{},   {},         ()]
+                #Map  Players moves   Pos of player
+        parsed = [{},       [],         ()]
         for instruction in instructions.split(END_DELIMITER):
             if not instruction:continue
             tag = instruction[0]
-            if tag == INIT_MARKER:
-                mode_delimiter_index = instruction.index(MODE_DELIMITER)
-                mode = instruction[1:mode_delimiter_index]
+            mode_delimiter_index = instruction.index(MODE_DELIMITER)
+            mode = instruction[1:mode_delimiter_index]
+            if tag == PLAYER_MOVEMENT:
+                #       mode= Player name       Pos of player
+                x,y = instruction[mode_delimiter_index+2:-1].split(",")
+                x,y = round(int(x),3),round(int(y),3)
+                parsed[1].append((mode, (x,y)))
+            elif tag == INIT_MARKER:
                 if mode == "Map":
                     
                     parsed[0] = json.loads(instruction[mode_delimiter_index+1:])
-                elif mode == "Players":
-                    parsed[1] = json.loads(instruction[mode_delimiter_index+1:])
                 elif mode == "Pos":
-                    parsed[2] = instruction[mode_delimiter_index+2:-1].split(",")
+                    parsed[2] = instruction[mode_delimiter_index+1:].split(",")
                     parsed[2][0] = int(parsed[2][0])
                     parsed[2][1] = int(parsed[2][1])
         return parsed
@@ -77,17 +82,17 @@ class Parser:
         
         for inst in instructions.split(END_DELIMITER):
             if not inst:continue
-            print(inst)
             tag = inst[0]
-            if tag == {DISCONNECT}:
+            if tag == DISCONNECT:
                 player,i = Parser.get_model(inst)
                 msg = Parser.get_last(inst)
                 parsed[0].append((player,msg))
-            elif tag == {PLAYER_MOVEMENT}:
+            elif tag == PLAYER_MOVEMENT:
                 player,i = Parser.get_model(inst)
-                pos = Parser.get_last(inst).split(",")
+                x,y = Parser.get_last(inst)[1:-1].split(",")
+                pos = float(x),float(y)
                 parsed[1].append((player,pos))
-            elif tag == {TILE_CHANGE}:
+            elif tag == TILE_CHANGE:
                 build_type = Parser.get_model(inst)
                 build_nbt,i = Parser.get_nbts(inst)
                 build_pos = inst[i:].split(",")
@@ -113,21 +118,21 @@ class Parser:
     
     @staticmethod
     def parse_client(raw:str):
+        # Player moves    If disconnected   Build changes
         parsed = [(),   False,           {}]
         if not raw: return parsed
-        # Player moves    If disconnected   Build changes
-        instructions = raw.split(END_DELIMITER)
-        for craw in instructions:
+        
+        for craw in raw.split(END_DELIMITER):
             if not craw:continue
             tag = craw[0]
-            if tag == {PLAYER_MOVEMENT}:
-                x,y = Parser.get_last(craw)[1:-1].split(",")
+            if tag == PLAYER_MOVEMENT:
+                x,y = craw[3:-1].split(",")
                 pos = float(x),float(y)
                 parsed[0] = pos
-            elif tag == {DISCONNECT}:
+            elif tag == DISCONNECT:
                 parsed[1] = Parser.get_last(craw)
                 print("so",Parser.get_last(craw),type(Parser.get_last(craw)))
-            elif tag == {TILE_CHANGE}:
+            elif tag == TILE_CHANGE:
                 assert False, "Not done yet !"
         return parsed
     @staticmethod
@@ -148,15 +153,27 @@ class Parser:
     def create_output(instructions:list[tuple[socket.socket, Any]]) -> str:
         outputs = ""
         
-        for client_instructions in instructions:
-            client, instruct = client_instructions
+        move_clients = []
+        moved_clients = []
+        
+        for client, instruct in instructions:
             if isinstance(instruct, str):
                 parsed = f"{DISCONNECT}{client}{MODE_DELIMITER}{instruct}"
-            elif isinstance(instruct, tuple):
-                parsed = f"{PLAYER_MOVEMENT}{client}{MODE_DELIMITER}({instruct[0]},{instruct[1]})"
+            elif isinstance(instruct, tuple):# Player movement
+                if client in moved_clients:
+                    index = moved_clients.index(client)
+                    move_clients[index] = instruct
+                else:
+                    move_clients.append(instruct)
+                    moved_clients.append(client)
+                continue
             #elif isinstance(instruct, unknown): TILE_CHANGE
             else:print("Unknown:",instruct,type(instruct),"from",client);continue
             outputs += END_DELIMITER + parsed
+        
+        for i in range(len(moved_clients)):
+            outputs += END_DELIMITER + f"{PLAYER_MOVEMENT}{moved_clients[i]}{MODE_DELIMITER}({move_clients[i][0]},{move_clients[i][1]})"
+        
         return outputs
     
     @staticmethod
@@ -167,3 +184,11 @@ class Parser:
     def create_move_instruct(new_move:tuple) -> bytes:
         x,y = round(new_move[0], 3),round(new_move[1], 3)
         return f"{PLAYER_MOVEMENT}{MODE_DELIMITER}({x},{y}){END_DELIMITER}".encode("utf-8")
+    
+    @staticmethod
+    def parse_pseudo(pseudo:str) -> str:
+        return pseudo[1:-1]
+    
+    @staticmethod
+    def create_pseudo(pseudo:str) -> str:
+        return f"{INIT_MARKER}{pseudo}{END_DELIMITER}"

@@ -21,7 +21,7 @@ class Building(Sprite):
 
     def construct(self, pos=None, buy:bool=True):
         if buy:pass
-        elif not self.game.menu_controller.buyable(self.COST, buy_possible=True) and self.constructed: return
+        elif not self.app.menu_controller.buyable(self.COST, buy_possible=True) and self.constructed: return
         pos = pos if pos else self.pos
         self.map.set(pos, self, self.size)
         self.pos = pos

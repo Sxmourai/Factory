@@ -12,14 +12,14 @@ class Map:
         if self.game is not None:
             for i in range(round(self.surf.get_width()/TW+1)):
                 for j in range(round(self.surf.get_height()/TH+1)):
-                    rect = pygame.Rect(transform(i*TW - self.camera.x, TW)+round(self.camera.x/TW)*TW, 
-                                    transform(j*TH - self.camera.y, TH)+round(self.camera.y/TH)*TH, *TILE_SIZE)
+                    rect = pygame.Rect(transform(i*TW - self.camera.tx, TW)+round(self.camera.tx/TW)*TW, 
+                                    transform(j*TH - self.camera.ty, TH)+round(self.camera.ty/TH)*TH, *TILE_SIZE)
                     self.surf.blit(TILE_IMG, rect)
 
             for pos, build in self.map.items():
                 rect = pygame.Rect(
-                    pos[0]*TW - self.camera.x - TW/2,
-                    pos[1]*TH - self.camera.y - TH/2,
+                    pos[0]*TW - self.camera.tx - TW/2,
+                    pos[1]*TH - self.camera.ty - TH/2,
                     build.w*TW, build.h*TH)
                 self.camera.render(build.img, rect, transform=True)
                 if type(build) is Factory:
@@ -37,13 +37,13 @@ class Map:
         if len(mpos) == 2:
             x,y = mpos
         else: x,y = pygame.mouse.get_pos()
-        tx,ty = self.in_tile(x+self.camera.x,y+self.camera.y, rround=rround)
+        tx,ty = self.in_tile(x+self.camera.tx,y+self.camera.ty, rround=rround)
         return tx,ty
 
     def pos_in_screen(self, pos):
         x,y = pos
-        x = int(x/TW)*TW - (self.camera.x%TW)
-        y = int(y/TH)*TH - (self.camera.y%TH)
+        x = int(x/TW)*TW - (self.camera.tx%TW)
+        y = int(y/TH)*TH - (self.camera.ty%TH)
         return x,y
     
     def get(self, index, returns=None):
@@ -77,27 +77,26 @@ class Map:
     def hover(self, mpos):
         tx,ty = self.tile_from_screen(mpos, rround=True)
         x,y = tx*TW, ty*TH
-        x -= self.camera.x
-        y -= self.camera.y
+        x -= self.camera.tx
+        y -= self.camera.ty
         self.last_rect = pygame.Rect(x,y, *TILE_SIZE)
         self.last_rect.center = x,y
 
     def load_map(self, world=None):
-        if not world and self.map: return
+        if not world: world = {}
         self.game = get_game()
         self.camera = self.game.camera
         self.surf = self.game.surf
         self.app = self.game.app
         self.map = {}
-        if world:
-            for pos, build in world.items():
-                pos = tuple([int(cpos) for cpos in pos.split(",")])
-                if build == "Factory":
-                    Factory(pos).construct(buy=False)
-                elif build == "Core":
-                    Core(pos).construct(buy=False)
-                elif build == "Generator":
-                    Generator(pos).construct(buy=False)
+        for pos, build in world.items():
+            pos = tuple([int(cpos) for cpos in pos.split(",")])
+            if build == "Factory":
+                Factory(pos).construct(buy=False)
+            elif build == "Core":
+                Core(pos).construct(buy=False)
+            elif build == "Generator":
+                Generator(pos).construct(buy=False)
 
     def unload_map(self) -> dict:
         unloaded_map = {}

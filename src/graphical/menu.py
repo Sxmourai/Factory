@@ -10,6 +10,7 @@ from os.path import isfile
 from abc import ABC, abstractmethod
 
 
+from src.graphical.player import Player
 from src.graphical.graphical import ButtonLogo
 from src.world.buildings import Factory,Core, Generator
 # from src.graphical.gui import ConstructMenu
@@ -174,9 +175,10 @@ class LoadMenu(GlobalMenu):
 
     def handle_click(self, button_id:str):
         super().handle_click(button_id)
-        for game in self.games:
-            if button_id == f"@{game[0]}":
-                self.load_game(game[1])
+        for button,game in self.games:
+            if button_id == button.object_ids[-1]:
+                self.load_game(game)
+                break
 
     def get_games_saves(self):
         for file in listdir(data("saves")):
@@ -189,6 +191,7 @@ class LoadMenu(GlobalMenu):
                     print(f"Couldn't open {data('saves',file)}. The file is corrupted")
 
     def load_game(self, game):
+        self.game.camera.player = Player((0,0), "")
         self.game.map.load_map(game.map)
         self.app.menu_controller.stats.points = game.stats["points"]
         self.app.menu_controller.stats.research = game.stats["research"]
@@ -272,15 +275,16 @@ class TitleScreen(GlobalMenu):
     def save(self):
         self.app.menu_controller.prompt("Name of save: ")
         self.saving = True
-        
+
     def handle_click(self, button_id:str):
-        super().handle_click(button_id)
         if button_id == "@quit_button":
-            self.app.exit()
+            self.app.stop()
         elif button_id == "@quit_save_button":
             self.save()
+            self.app.stop()
         elif button_id == "@disconnect_button":
             self.app.client.disconnect()
+        else:super().handle_click(button_id)
 
 
 class GameSave:

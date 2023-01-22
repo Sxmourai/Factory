@@ -1,7 +1,10 @@
+from random import sample
 import pygame
+from src.server.parser import Parser
 from src.graphical.menu import Stats
 from src.graphical.player import Player
-from src.ressources import get_vec, get_game, sysFont, get_surf
+from src.ressources import get_vec, get_game, sysFont, get_surf, TW,TH
+
 class Camera:
     """Camera object for game"""
     def __init__(self) -> None:
@@ -9,31 +12,43 @@ class Camera:
         self.game = None
         self.menus = []
         self.players = []
+        self.player = None
 
     @property
     def x(self):return self.player.x
     @property
     def y(self):return self.player.y
+    @property
+    def tx(self):return self.x*TW
+    @property
+    def ty(self):return self.y*TH
 
-    def load_players(self, players:list, pos:tuple[float|int,float|int]):
-        self.player = Player(pos, "Me")
-        self.players.append(self.player)
-        for player in players:
-            self.players.append(Player(player[1], player[0]))
 
     def disconnect_players(self, players:list):
         for player in players:
-            print(player)
-            if player in self.players:self.players.remove(player)
+            print(player, "Disconnected")
+            for cplayer in self.players:
+                if player == cplayer.pseudo:
+                    self.players.remove(cplayer)
 
     def move_players(self, players_moves:list):
-        for move in players_moves:
-            print(move)
+        for player, move in players_moves:
+            existing_player = False
+            for cplayer in self.players:
+                if player == cplayer.pseudo and cplayer != self.player:
+                    cplayer.pos = move
+                    existing_player = True
+                    break
+            if existing_player is False and player != self.player.pseudo:
+                self.players.append(Player(move, player))
 
     def draw_players(self):
+        print([player.pseudo for player in self.players], end="\r")
         for player in self.players:
-            self.render(player.img, player.pos, True)
-            self.render_text(player.pseudo, 10, (player.x, player.y-50), color=(255,255,255))
+            self.draw_on_tile(player.img, player.pos, (40,40), transform=True)
+            
+            self.render_text(player.pseudo, 10, (player.x*TW, player.y*TH-50), color=(255,255,255))
+        self.surf.blit(self.player.img, pygame.Rect(self.surf.get_width()/2-self.player.w/2,self.surf.get_height()/2-self.player.h/2,self.player.w,self.player.h))
 
     def start(self):
         self.game = get_game()
@@ -44,10 +59,24 @@ class Camera:
             direction (int|float): Direction to move the camera (angle)
             sprint (bool): If it should sprint (double speed)
         """
-        speed = 3*2 if sprint else 3
+        speed = .2*2 if sprint else .2
         velo_x,velo_y = get_vec(speed, direction)
         self.player.x += velo_x
         self.player.y += velo_y
+
+    def draw_on_tile(self, img:pygame.Surface, pos_in_tile:tuple[float|int,float|int],size:tuple[float|int,float|int],transform:bool=False):
+        x,y = pos_in_tile
+        x *= TW
+        y *= TH
+        x -= self.tx
+        y -= self.ty
+        x += self.surf.get_width()/2
+        y += self.surf.get_height()/2
+        if transform:
+            x -= size[0]/2
+            y -= size[0]/2
+        img = pygame.transform.scale(img, size)
+        self.surf.blit(img, pygame.Rect(x,y, *size))
 
     def render(self, img:pygame.Surface,pos_or_rect:tuple[int,int]|pygame.Rect, transform:bool|tuple[bool,bool]=False):
         """Renders an image at specified coordinates or rect

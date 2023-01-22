@@ -49,6 +49,7 @@ class Application:
             self.started = False
             self.game.stop()
             self.menu_controller.stop()
+            self.game.camera.players.clear()
 
     def exit(self):
         if self.client.disconnect is False: self.client.disconnect()

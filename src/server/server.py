@@ -6,6 +6,8 @@ from src.server.parser import Parser
 from src.server.src import PORT
 import sys
 
+class _ServerClient:pass
+
 class Server:
     LOCAL = "localhost"
     def __init__(self, host:str, port:int=None, map:dict={}):
@@ -24,66 +26,87 @@ class Server:
         while True:
             if self.sock._closed: return
             self.broadcast_instructions()
-            sleep(2)
+            sleep(.05)
 
     def accept_connections(self):
         while True:
             try:
                 sock, addr = self.sock.accept()
                 print(f"New client at {addr[0]}:{addr[1]}")
-                self.initialize_client(sock, (0,0),self.map)
+                
+                addrs = [(client.pseudo,client.pos) for client in self.clients]
+                instructs = Parser.create_initialization(self.map,addrs,(0,0))
+                print("in",instructs)
+                self.send(instructs,sock)
+                
                 pseudo = Parser.parse_pseudo(sock.recv(512).decode("utf-8"))
-                self.clients.append(ServerClient(sock,addr,(0,0),pseudo))
-                client_thread = Thread(target=self.handle_client, args=(sock,))
+                client = ServerClient(sock,addr,(0,0),pseudo)
+
+                self.clients.append(client)
+                
+                client_thread = Thread(target=self.handle_client, args=(client,))
                 client_thread.start()
+                self.instructions.append((client.pseudo,client.pos))
+                
             except OSError:
                 return
 
-    def handle_client(self, client:socket.socket):
+    def handle_client(self, client:_ServerClient):
         while True:
             try:
-                move,disconnected,changes = Parser.parse_client(client.recv(2048).decode("utf-8"))
+                received = client.recv(2048).decode("utf-8")
+                move,disconnected,changes = Parser.parse_client(received)
+                if disconnected and changes:
+                    print("Got from client",disconnected,changes)
                 if disconnected:
-                    print(f"Player {self.get_addr(client)} disconnected because {disconnected}")
-                    self.instructions.append((self.get_addr(client),disconnected))
+                    print(f"Player {client.pseudo} disconnected because {disconnected}")
+                    self.instructions.append((client.pseudo,disconnected))
                     client.close()
+                    self.clients.remove(client)
                     return
                 if move:
-                    print(self.get_addr(client),"moved at",move)
-                    #                        Pseudo of player
-                    self.instructions.append((self.get_addr(client),move))
+                    self.instructions.append((client.pseudo,move))
                 if changes: assert False, "Not implemented !"
             
             except (ConnectionAbortedError,ConnectionResetError):
-                print(f"Player {self.get_addr(client)} aborted connection.")
-                self.instructions.append((self.get_addr(client),"the connection was aborted."))
+                print(f"Player {client.pseudo} aborted connection.")
+                self.instructions.append((client.pseudo,"the connection was aborted."))
                 client.close()
+                self.clients.remove(client)
                 return
-
-
+            except OSError:
+                self.clients.remove(client)
+                return
 
     def broadcast_instructions(self):
         if self.instructions:
-            outputs = Parser.create_output(self.instructions).encode("utf-8")
-            print("Broadcasting",self.instructions)
+            outputs = Parser.create_output(self.instructions)
             self.broadcast(outputs)
             self.instructions.clear()
 
     def broadcast(self,broadcasted:str|bytes):
         if isinstance(broadcasted, str): broadcasted = broadcasted.encode("utf-8")
         print("Broadcasting",broadcasted.decode("utf-8"))
-        for client in self.socks:
-            if not client._closed:
-                client.send(broadcasted)
-            else:self.remove_client(client)
-        
+        for client in self.clients:
+            if not client.sock._closed:
+                self.send(broadcasted, client)
+            else:self.clients.remove(client)
 
-    def initialize_client(self, sock:socket.socket, pos:tuple[float,float]|tuple[int,int],map:dict):
-        init_instructions = f"IPos/{pos}|IMap/{map}|"
-        sock.send(init_instructions.encode('utf-8'))
-        
-        
-        self.broadcast("|".join(list(f"IPlayers/{addr}" for addr in self.addrs)))
+    def send(self, msg:str|bytes, client:_ServerClient|socket.socket):
+        if isinstance(msg, str):msg = msg.encode("utf-8")
+        print("Sending",msg.decode("utf-8"))
+        try:
+            if isinstance(client, socket.socket):
+                client.send(msg)
+            else:
+                client.send(msg)
+        except (ConnectionResetError,ConnectionAbortedError,ConnectionRefusedError):
+            self.clients.remove(client)
+        for client in self.clients:
+            if client.sock._closed:
+                self.clients.remove(client)
+                client.sock.close()
+
 
     def exec_input(self, input:str):
         inp = input.lower()
@@ -91,12 +114,16 @@ class Server:
             assert False, "Not implemented"
         elif inp == "broadcast":
             self.broadcast_instructions()
+        elif inp == "clients":
+            print(len(self.clients),"=============")
+            for client in self.clients:
+                print(client.pseudo)
         #...
 
     def exit(self):
         print("Closing sockets...")
-        for client in self.socks:
-            client[0].close()
+        for client in self.clients:
+            client.close()
         self.sock.close()
         print("Exiting...")
         sys.exit()
@@ -109,3 +136,16 @@ class ServerClient:
         self.addr = addr
         self.x,self.y = pos
         self.pseudo = pseudo
+        
+    @property
+    def pos(self):return self.x,self.y
+        
+    def recv(self, bufsize:int):
+        return self.sock.recv(bufsize)
+    def send(self, data:str|bytes):
+        data = data if isinstance(data,bytes) else data.encode("utf-8")
+        return self.sock.send(data)
+    def close(self):
+        self.sock.close()
+    def is_closed(self):
+        return self.sock._closed

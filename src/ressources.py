@@ -150,9 +150,11 @@ class Shape:
         self._w, self._h = size
         self._rect = pygame.Rect(*pos,*size)
         self.game = get_game()
+        self.app = self.game.app
         self.surf = self.game.surf
         self.camera = self.game.camera
         self.map = self.game.map
+
     @property
     def x(self):
         return self._x
