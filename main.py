@@ -3,7 +3,7 @@ import pygame
 from src.main.app import Application
 pygame.init()
 pygame.display.set_caption('Factory game')
-app = Application((1000,800))
+app = Application((1000,600))
 RUNNING = True
 while RUNNING:
     try:

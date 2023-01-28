@@ -1,13 +1,16 @@
+from src.server.parser import Parser
 from src.ressources import load, transform,rprint, get_game, TW, TH, TILE_SIZE, TILE_IMG, TILE_IMG_HOVER
 
-from src.world.buildings import Core, Factory, Generator
 import pygame
 
 class Map:
     def __init__(self):
-        self.map = None
+        self.map = {}
         self.game = None
         self.last_rect = pygame.Rect(0,0,0,0)
+        self.camera = None
+        self.surf = None
+        self.app = None
     def draw(self):
         if self.game is not None:
             for i in range(round(self.surf.get_width()/TW+1)):
@@ -22,8 +25,6 @@ class Map:
                     pos[1]*TH - self.camera.ty - TH/2,
                     build.w*TW, build.h*TH)
                 self.camera.render(build.img, rect, transform=True)
-                if type(build) is Factory:
-                    build.draw()
             self.hover(pygame.mouse.get_pos())
             self.camera.render(self.app.event_controller.construct_img, self.last_rect)
 
@@ -82,34 +83,31 @@ class Map:
         self.last_rect = pygame.Rect(x,y, *TILE_SIZE)
         self.last_rect.center = x,y
 
-    def load_map(self, world=None):
-        if not world: world = {}
-        self.game = get_game()
-        self.camera = self.game.camera
-        self.surf = self.game.surf
-        self.app = self.game.app
-        self.map = {}
-        for pos, build in world.items():
-            pos = tuple([int(cpos) for cpos in pos.split(",")])
-            if build == "Factory":
-                Factory(pos).construct(buy=False)
-            elif build == "Core":
-                Core(pos).construct(buy=False)
-            elif build == "Generator":
-                Generator(pos).construct(buy=False)
+    def load_map(self, world:dict|list=None):
+        self.start()
+        if not world: return
+        if isinstance(world, dict):
+            for pos, nbts in world.items():
+                pos = tuple([int(cpos) for cpos in pos.split(",")])
+                self.map[pos] = Parser.create_build(pos, nbts)
 
     def unload_map(self) -> dict:
         unloaded_map = {}
         for pos, build in self.map.items():
-            b_instance = type(build)
-            if b_instance == Factory:
-                b_title = "Factory"
-            elif b_instance == Core:
-                b_title = "Core"
-            elif b_instance == Generator:
-                b_title = "Generator"
-            unloaded_map[f"{pos[0]},{pos[1]}"] = b_title
+            unloaded_map[pos] = build.str()
         return unloaded_map
+
     def handle_map_change(self, changes):
         if not changes:return
-        print("Map changed",changes)
+        for builds in changes:
+            print("Type:",build_type, "nbts:",nbts)
+            self.map[tuple(nbts["pos"])] = Parser.create_build(build_type, nbts)
+            self.map[tuple(nbts["pos"])].construct(buy=False, send=False)
+    
+    def start(self):
+        if self.game: self.map = {}
+        else:
+            self.game = get_game()
+            self.camera = self.game.camera
+            self.surf = self.game.surf
+            self.app = self.game.app

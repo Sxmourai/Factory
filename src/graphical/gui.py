@@ -5,7 +5,6 @@ from pygame_gui.elements import UIPanel, UIButton, UILabel, UITextBox, UIWindow,
 from pygame_gui.ui_manager import UIContainer
 import pygame
 
-from src.world.buildings import Core, Factory, Generator
 
 class Menu:
     def __init__(self) -> None:

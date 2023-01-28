@@ -2,14 +2,25 @@ from math import sin, cos, radians
 from pathlib import Path
 import pygame
 #from time import time
+def _load(path:str, size:int=None):
+    try:
+        img = pygame.image.load(path)
+        if size:
+            if isinstance(size, int): size = size,size
+            img = pygame.transform.scale(img, size)
+        return img
+    except FileNotFoundError:
+        return None
+
 GAME_TITLE = "Fusion"
 PATH = str(Path(".").cwd())+"\\src\\"
 
 SCALE = 100
 TILE_SIZE = (int(.3*SCALE), int(.3*SCALE))
 TW, TH = TILE_SIZE
-TILE_IMG = pygame.transform.scale(pygame.image.load(PATH+"data\\img\\tile.png"), TILE_SIZE)
-TILE_IMG_HOVER = pygame.transform.scale(pygame.image.load(PATH+"data\\img\\tile_selected.png"), TILE_SIZE)
+
+TILE_IMG = _load(PATH+"data\\img\\tile.png", TILE_SIZE)
+TILE_IMG_HOVER = _load(PATH+"data\\img\\tile_selected.png", TILE_SIZE)
 
 
 SCREEN_SIZE = (1000,800)

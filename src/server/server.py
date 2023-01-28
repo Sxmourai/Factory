@@ -1,27 +1,35 @@
+import json
 import socket
 from time import sleep
 from threading import Thread
+import sys
 
 from src.server.parser import Parser
-from src.server.src import PORT
-import sys
+from src.server.src import PORT, TILE_CHANGE, PLAYER_MOVEMENT, DISCONNECT
+from src.world.build_containers import BuildContainer
+
 
 class _ServerClient:pass
 
 class Server:
     LOCAL = "localhost"
-    def __init__(self, host:str, port:int=None, map:dict={}):
+    def __init__(self, host:str, port:int=None):
         self.host = host
         self.port = port if port else PORT
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((self.host, self.port))
         self.sock.listen()
-        self.map = map
+        try:
+            with open("game.json", "r") as f:
+                self.map = json.load(f)
+                
+                print(self.map)
+        except (FileNotFoundError, json.decoder.JSONDecodeError): self.map = {}
         self.clients = []
         self.instructions = []
 
     def run(self):Thread(target=self._run).start()
-    def _run(self): 
+    def _run(self):
         Thread(target=self.accept_connections).start()
         while True:
             if self.sock._closed: return
@@ -46,7 +54,7 @@ class Server:
                 
                 client_thread = Thread(target=self.handle_client, args=(client,))
                 client_thread.start()
-                self.instructions.append((client.pseudo,client.pos))
+                self.instructions.append((PLAYER_MOVEMENT, client.pseudo,client.pos))
                 
             except OSError:
                 return
@@ -56,21 +64,22 @@ class Server:
             try:
                 received = client.recv(2048).decode("utf-8")
                 move,disconnected,changes = Parser.parse_client(received)
-                if disconnected and changes:
-                    print("Got from client",disconnected,changes)
                 if disconnected:
                     print(f"Player {client.pseudo} disconnected because {disconnected}")
-                    self.instructions.append((client.pseudo,disconnected))
+                    self.instructions.append((DISCONNECT, client.pseudo,disconnected))
                     client.close()
                     self.clients.remove(client)
                     return
                 if move:
-                    self.instructions.append((client.pseudo,move))
-                if changes: assert False, "Not implemented !"
-            
+                    self.instructions.append((PLAYER_MOVEMENT, client.pseudo,move))
+                if changes:
+                    for pos,build in changes:
+                        self.map[pos] = build # build type is str
+                        self.instructions.append((TILE_CHANGE, self.map[pos]))
+
             except (ConnectionAbortedError,ConnectionResetError):
                 print(f"Player {client.pseudo} aborted connection.")
-                self.instructions.append((client.pseudo,"the connection was aborted."))
+                self.instructions.append((DISCONNECT, client.pseudo,"the connection was aborted."))
                 client.close()
                 self.clients.remove(client)
                 return
@@ -86,7 +95,6 @@ class Server:
 
     def broadcast(self,broadcasted:str|bytes):
         if isinstance(broadcasted, str): broadcasted = broadcasted.encode("utf-8")
-        print("Broadcasting",broadcasted.decode("utf-8"))
         for client in self.clients:
             if not client.sock._closed:
                 self.send(broadcasted, client)
@@ -94,7 +102,6 @@ class Server:
 
     def send(self, msg:str|bytes, client:_ServerClient|socket.socket):
         if isinstance(msg, str):msg = msg.encode("utf-8")
-        print("Sending",msg.decode("utf-8"))
         try:
             if isinstance(client, socket.socket):
                 client.send(msg)
@@ -118,6 +125,8 @@ class Server:
             print(len(self.clients),"=============")
             for client in self.clients:
                 print(client.pseudo)
+        elif inp == "map":
+            print(*self.map.items(), sep=" - ")
         #...
 
     def exit(self):
@@ -125,7 +134,16 @@ class Server:
         for client in self.clients:
             client.close()
         self.sock.close()
-        print("Exiting...")
+        print("Saving world...")
+        with open("game.json", "wb") as f:
+            map = {}
+            for pos, build in self.map.items():
+                map[str(pos)[1:-1]] = build
+            c = list(str(map))
+            for i,char in enumerate(c):
+                if char == "'": c[i] = '"'
+                elif char == '"': c[i] = "'"
+            f.write(bytes(json.dumps(map), "utf-8"))
         sys.exit()
 
 

@@ -12,28 +12,30 @@ class Client:
         self.app = app
         self.connected = False
     
+    def construct(self, building):
+        self.sock.send(Parser.build_change_create(building).encode("utf-8"))
+    
     def connect_to_server(self, server_ip:str):
         try:
             self.sock = socket.socket(AF_INET, SOCK_STREAM)
             print("Connecting...")
             self.sock.connect(Parser.parse_ip(server_ip))
-        except ConnectionRefusedError:return
+        except (ConnectionRefusedError, socket.gaierror):return
         print("Getting the initialization")
         while True:
             init_instructions = self.sock.recv(2048).decode("utf-8")
             if init_instructions:break
         print("Parse",init_instructions)
-        map, players_move, self_pos = Parser.parse_initialization(init_instructions)
-        
-        if self_pos: 
+        self.app.game.map.start()
+        players_move, self_pos = Parser.parse_initialization(init_instructions)
+
+        if self_pos:
             if self.app.game.camera.player:
                 self.app.game.camera.player.pos = self_pos
             else:
                 self.app.game.camera.player = Player(self_pos, "".join(sample("abcdefghijklmnopqrstuvwxyz",10)))
         
         self.sock.send(Parser.create_pseudo(self.app.game.camera.player.pseudo).encode("utf-8"))
-        self.app.game.map.load_map(map)
-        # print("Start",players_move)
         self.app.game.camera.move_players(players_move)
         self.app.start()
         self.connected = True
@@ -48,12 +50,10 @@ class Client:
             try:
                 raw_instructions = self.sock.recv(1024).decode('utf-8')
                 if Parser.should_disconnect(raw_instructions, self.sock.getsockname()):self.disconnect();return
-                disconnected_players,players_movements,build_changes = Parser.parse(raw_instructions)
-                print("Got",disconnected_players,build_changes)
+                disconnected_players,players_movements = Parser.parse_server(raw_instructions)
+
                 self.app.game.camera.disconnect_players(disconnected_players)
-                # print(players_movements)
                 self.app.game.camera.move_players(players_movements)
-                self.app.game.map.handle_map_change(build_changes)
             except (ConnectionResetError, ConnectionAbortedError):
                 self.disconnect()
                 return

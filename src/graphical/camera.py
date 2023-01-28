@@ -25,8 +25,8 @@ class Camera:
 
 
     def disconnect_players(self, players:list):
-        for player in players:
-            print(player, "Disconnected")
+        for player, msg in players:
+            print(player, "disconnected because",msg)
             for cplayer in self.players:
                 if player == cplayer.pseudo:
                     self.players.remove(cplayer)
@@ -36,7 +36,7 @@ class Camera:
             existing_player = False
             for cplayer in self.players:
                 if player == cplayer.pseudo and cplayer != self.player:
-                    cplayer.pos = move
+                    cplayer.next_pos = move
                     existing_player = True
                     break
             if existing_player is False and player != self.player.pseudo:
@@ -45,9 +45,7 @@ class Camera:
     def draw_players(self):
         print([player.pseudo for player in self.players], end="\r")
         for player in self.players:
-            self.draw_on_tile(player.img, player.pos, (40,40), transform=True)
-            
-            self.render_text(player.pseudo, 10, (player.x*TW, player.y*TH-50), color=(255,255,255))
+            player.draw()
         self.surf.blit(self.player.img, pygame.Rect(self.surf.get_width()/2-self.player.w/2,self.surf.get_height()/2-self.player.h/2,self.player.w,self.player.h))
 
     def start(self):

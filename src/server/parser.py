@@ -1,12 +1,16 @@
-from src.server.src import *
 import json
 import socket
 from typing import Any
+
+from src.world.build_containers import BuildContainer
+from src.server.src import *
+from src.world.buildings import Building, TITLES
+
 ####################################
 # Strings sent with sockets be-likes
 #
 # For init                                      Position of the incoming player
-# IMap/{...}|IPlayers/{"name":"skin_url"}|IPos/X,Y
+# IMap/{...}|IPos/X,Y
 #
 # For game
 # DSxmourai/Got kicked by example.|PHades/15.6,9.5|BFactory/{buffer:999}
@@ -19,16 +23,37 @@ class Parser:
     @staticmethod
     def create_initialization(map:dict, players:tuple, player_pos:tuple[float,float]|tuple[int,int]):
         parsed = ""
-        parsed += f"{INIT_MARKER}Map{MODE_DELIMITER}{map}{END_DELIMITER}"
+        nmap = ""
+        for build in map.values():
+            nmap += f"{build}{BUILD_DELIMITER}"
+        # nmap = nmap.replace("'", "")
+        parsed += f"{INIT_MARKER}Map{MODE_DELIMITER}{nmap[:-1]}{END_DELIMITER}"
         for player in players:
             parsed += f"{PLAYER_MOVEMENT}{player[0]}{MODE_DELIMITER}{player[1]}{END_DELIMITER}"
         parsed += f"{INIT_MARKER}Pos{MODE_DELIMITER}{player_pos[0]},{player_pos[1]}{END_DELIMITER}"
         return parsed
 
     @staticmethod
+    def create_build_from_str(build:str, construct:bool=True) -> Building:
+        try:
+            type,i = Parser.to("{", build, start=0)
+        except ValueError: print("Unknown build:",build);return
+        nbts_str = Parser.from_str(i, build)
+        print(nbts_str)
+        nbts = json.loads(nbts_str)
+        build = TITLES[type](nbts["pos"])
+        build.buffer = nbts["buffer"]
+        if construct: build.construct(buy=False, send=False)
+        return build
+    
+    @staticmethod
+    def create_build_str(type:str, nbts:dict) -> str:
+        return f"{type}{json.dumps(nbts)}"
+
+    @staticmethod
     def parse_initialization(instructions:str) -> list:
-                #Map  Players moves   Pos of player
-        parsed = [{},       [],         ()]
+                #Players moves   Pos of player
+        parsed = [[],               ()]
         for instruction in instructions.split(END_DELIMITER):
             if not instruction:continue
             tag = instruction[0]
@@ -38,30 +63,31 @@ class Parser:
                 #       mode= Player name       Pos of player
                 x,y = instruction[mode_delimiter_index+2:-1].split(",")
                 x,y = round(int(x),3),round(int(y),3)
-                parsed[1].append((mode, (x,y)))
+                parsed[0].append((mode, (x,y)))
             elif tag == INIT_MARKER:
                 if mode == "Map":
-                    
-                    parsed[0] = json.loads(instruction[mode_delimiter_index+1:])
+                    builds = Parser.from_str(mode_delimiter_index+1, instruction)
+                    if not builds: continue
+                    for build in builds.split(BUILD_DELIMITER):
+                        if not build: continue
+                        Parser.create_build_from_str(build, construct=True)
+
                 elif mode == "Pos":
-                    parsed[2] = instruction[mode_delimiter_index+1:].split(",")
-                    parsed[2][0] = int(parsed[2][0])
-                    parsed[2][1] = int(parsed[2][1])
+                    x,y = [float(coord) for coord in instruction[mode_delimiter_index+1:].split(",")]
+                    parsed[1] = x,y
         return parsed
     @staticmethod
     def sync_parse(): assert False, "Not implemented"
     @staticmethod
-    def move_player_parse(player) -> str:
+    def move_player_create(player) -> str:
         parsed_move = f"{PLAYER_MOVEMENT}"
         parsed_move += f"{player.x},{player.y}"
         return parsed_move
     @staticmethod
-    def build_change_parse(build):
-        parsed_change = f"{TILE_CHANGE}"
-        parsed_change += f"{build.type}{MODE_DELIMITER}{build.NBT}"
-        return parsed_change
+    def build_change_create(build):
+        return f"{TILE_CHANGE}{build.str()}{END_DELIMITER}"
     @staticmethod
-    def disconnect_parse(player,msg:str=None) -> bool|str:
+    def disconnect_create(player,msg:str=None) -> bool|str:
         msg = msg if msg else "Disconnected"
         return f"{DISCONNECT}{player}{MODE_DELIMITER}{msg}"
     
@@ -74,10 +100,10 @@ class Parser:
     def get_last(instruction:str) -> str:
         mode_index = instruction.index(MODE_DELIMITER)
         return instruction[mode_index+1:]
-    
+
     @staticmethod
-    def parse(instructions:str) -> tuple[list,list,list]:
-        parsed = ([],[],[])
+    def parse_server(instructions:str) -> tuple[list,list]:
+        parsed = ([],[])
         if not instructions: return parsed
         
         for inst in instructions.split(END_DELIMITER):
@@ -93,33 +119,31 @@ class Parser:
                 pos = float(x),float(y)
                 parsed[1].append((player,pos))
             elif tag == TILE_CHANGE:
-                build_type = Parser.get_model(inst)
-                build_nbt,i = Parser.get_nbts(inst)
-                build_pos = inst[i:].split(",")
-                parsed[2].append((build_type, build_nbt, build_pos))
+                Parser.create_build_from_str(inst[1:])
+
         return parsed
+
+    @staticmethod
+    def to(stop:str, overall:str, start:int=1):
+        i = overall.index(stop)
+        return overall[start:i], i
+    @staticmethod
+    def from_str(start_index:int|str, overall:str, end=None):
+        if isinstance(start_index, str): start_index = overall.index(start_index)
+        if end: return overall[start_index:end]
+        return overall[start_index:]
+
     @staticmethod
     def get_nbts(instruction:str) -> tuple[str,int]:
         mode_index = instruction.index(MODE_DELIMITER)
         last_mode_index = instruction[mode_index:].index(MODE_DELIMITER)
         return instruction[mode_index:last_mode_index], last_mode_index
     
-    @staticmethod
-    def stringify_parsed(parsed:tuple[list,list,list]) -> list[str]:
-        stringified_parse = []
-        for disconnected_player_name, msg in parsed[0]:
-            stringified_parse += f"{DISCONNECT}{disconnected_player_name}{MODE_DELIMITER}{msg}{END_DELIMITER}"
-        for player_name, new_pos in parsed[1]:
-            stringified_parse += f"{PLAYER_MOVEMENT}{player_name}{MODE_DELIMITER}{new_pos}{END_DELIMITER}"
-        for build_type, nbt, new_pos in parsed[2]:
-            stringified_parse += f"{TILE_CHANGE}{build_type}{MODE_DELIMITER}{nbt}{END_DELIMITER}"
-
-        return stringified_parse
     
     @staticmethod
     def parse_client(raw:str):
         # Player moves    If disconnected   Build changes
-        parsed = [(),   False,           {}]
+        parsed = [(),   False,           []]
         if not raw: return parsed
         
         for craw in raw.split(END_DELIMITER):
@@ -132,13 +156,17 @@ class Parser:
             elif tag == DISCONNECT:
                 parsed[1] = Parser.get_last(craw)
                 print("so",Parser.get_last(craw),type(Parser.get_last(craw)))
-            elif tag == TILE_CHANGE:
-                assert False, "Not done yet !"
+            elif tag == TILE_CHANGE:#CString-Generator{...}
+                build_str = Parser.from_str(1, craw)
+                nbts = Parser.from_str("{", craw).replace("'", '"')
+                pos = json.loads(nbts)["pos"]
+                parsed[2].append((tuple(pos), build_str))
         return parsed
+
+
     @staticmethod
     def create_disconnect(message:str="Disconnected."):
         return f"{DISCONNECT}{MODE_DELIMITER}{message}"
-    
     
     @staticmethod
     def parse_ip(server_ip:str) -> tuple[str, int]:
@@ -156,21 +184,26 @@ class Parser:
         move_clients = []
         moved_clients = []
         
-        for client, instruct in instructions:
-            if isinstance(instruct, str):
-                parsed = f"{DISCONNECT}{client}{MODE_DELIMITER}{instruct}"
-            elif isinstance(instruct, tuple):# Player movement
+        for instruct in instructions:
+            mode = instruct[0]
+            if mode is DISCONNECT:
+                client,message = instruct[1], instruct[-1]
+                parsed = f"{DISCONNECT}{client}{MODE_DELIMITER}{message}"
+            elif mode is PLAYER_MOVEMENT:
+                client, pos = instruct[1], instruct[-1]
                 if client in moved_clients:
                     index = moved_clients.index(client)
-                    move_clients[index] = instruct
+                    move_clients[index] = pos
                 else:
-                    move_clients.append(instruct)
+                    move_clients.append(pos)
                     moved_clients.append(client)
                 continue
-            #elif isinstance(instruct, unknown): TILE_CHANGE
-            else:print("Unknown:",instruct,type(instruct),"from",client);continue
+            
+            elif mode is TILE_CHANGE:
+                parsed = f"{TILE_CHANGE}{instruct[1]}"
+            else:print("Unknown:",instruct,type(instruct));continue
             outputs += END_DELIMITER + parsed
-        
+
         for i in range(len(moved_clients)):
             outputs += END_DELIMITER + f"{PLAYER_MOVEMENT}{moved_clients[i]}{MODE_DELIMITER}({move_clients[i][0]},{move_clients[i][1]})"
         

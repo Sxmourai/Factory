@@ -11,6 +11,7 @@ from src.server.client import Client
 
 class Application:
     def __init__(self, screen_size) -> None:
+        self.buttons = []
         set_app(self)
         pygame.init()
         pygame.display.set_caption('Factory game')
@@ -24,14 +25,13 @@ class Application:
         self.event_controller = EventController()
         self.client = Client(self)
 
-    def run(self, events=None, keys=None):
+    def run(self, keys=None):
         self.draw()
         self.menu_controller.run()
         
         if keys is None: keys = pygame.key.get_pressed()
-        if events is None: events = pygame.event.get()
         self.event_controller.handle_keys(keys)
-        return self.event_controller.handle_events(events)
+        return not self.event_controller.handle_events()
     
     def draw(self):
         self.game.draw()
@@ -52,7 +52,7 @@ class Application:
             self.game.camera.players.clear()
 
     def exit(self):
-        if self.client.disconnect is False: self.client.disconnect()
+        if self.client.connected is True: self.client.disconnect()
         self.menu_controller.multi_menu.save_servers()
         pygame.quit()
         exit()

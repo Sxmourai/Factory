@@ -1,8 +1,9 @@
 from pygame_gui import UI_BUTTON_PRESSED
+from pygame_gui.elements import UIButton
 import pygame
 from src.graphical.menu import Stats, Commands, TitleScreen
 from src.ressources import TILE_IMG_HOVER, get_app
-from src.world.buildings import Building, Core, Factory
+from src.world.buildings import Building
 
 class EventController:
     def __init__(self) -> None:
@@ -16,39 +17,35 @@ class EventController:
         self.construction_mode = False
 
 
-    def handle_events(self, events) -> bool:
-        pressed_button = False
+    def handle_events(self) -> bool:
+        events = pygame.event.get()
         for event in events:
             self.app.manager.process_events(event)
-            if event.type == UI_BUTTON_PRESSED:pressed_button = True
+
+        for event in pygame.event.get():
+            if event.type == UI_BUTTON_PRESSED:
+                self.app.menu_controller.handle_button_click_event(event)
+                return
+
 
         for event in events:
             if event.type == pygame.QUIT:
-                self.app.client.disconnect()
                 self.app.exit()
                 return False
-            elif event.type == UI_BUTTON_PRESSED:
-                self.app.menu_controller.handle_button_click_event(event)
             elif self.app.started:
-                if event.type == pygame.MOUSEBUTTONUP and pressed_button:
+                if event.type == pygame.MOUSEBUTTONUP:
                     self.handle_click_event(event)
-                if event.type == pygame.KEYDOWN:
+                elif event.type == pygame.KEYDOWN:
                     self.handle_keydown(event.key)
                 elif event.type == pygame.MOUSEMOTION:
                     self.handle_hover_event(event)
-
-        return True
 
     def handle_click_event(self, event):
         """Handles the click of user"""
         mpos = pygame.mouse.get_pos()
         pos = self.map.tile_from_screen(mpos, rround=True)
-        build = self.map.get(pos)
-        self.app.menu_controller.handle_build_click(build, self.to_construct)
-        if build:
-            if self.construction_mode: self.app.alert("Can't place that here !")
-        else:
-            self.construct(pos)
+        
+        self.app.menu_controller.handle_build_click(pos, self.to_construct)
 
     def handle_keydown(self, key):
         if key == pygame.K_ESCAPE:
@@ -80,10 +77,6 @@ class EventController:
                 self.camera.move(90, keys[pygame.K_SPACE])
             if keys[pygame.K_LEFT]:
                 self.camera.move(270, keys[pygame.K_SPACE])
-            if keys[pygame.K_f]:
-                self.enter_construction_mode(Factory)
-            if keys[pygame.K_c]:
-                self.enter_construction_mode(Core)
 
     def enter_construction_mode(self, building:Building):
         pos = self.map.tile_from_screen(rround=True)
@@ -95,9 +88,8 @@ class EventController:
         self.construction_mode = False
 
     def construct(self, pos):
-        if self.construction_mode:
-            self.to_construct.construct(pos)
-            self.enter_construction_mode(type(self.to_construct))
+        self.to_construct.construct(pos)
+        self.enter_construction_mode(type(self.to_construct))
 
     @property
     def construct_img(self):

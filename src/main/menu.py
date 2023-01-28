@@ -1,13 +1,8 @@
-from time import time
-import pygame
-from src.graphical.gui import ConstructMenu
+
 from src.graphical.menu import AlertContainer, Commands, LoadMenu, MultiMenu, StartMenu, Stats, TitleScreen
 from src.ressources import get_app
 
-from pygame_gui.core import ObjectID
-from pygame_gui.elements import UIButton, UILabel, UITextEntryLine, UIPanel
 
-from src.world.buildings import Core, Factory, Generator
 
 class MenuController:
     def __init__(self) -> None:
@@ -35,10 +30,8 @@ class MenuController:
         self.hide_menu()
         for menu in self.statics:
             menu._show()
-
-        buildings = [Factory, Core, Generator]
-        for building in buildings:
-            self.commands.construct_menu.add_building(building)
+        
+        self.commands.construct_menu.start()
 
     def stop(self):self.hide_menu();self.start_menu.show()
     def alert(self,text):self.alert_container.alert(text)
@@ -60,14 +53,19 @@ class MenuController:
         else:
             self.handle_static_click(button_id)
 
-    def handle_build_click(self, targeted_tile, to_construct):
-        if targeted_tile:
-            if self.menu == targeted_tile.menu:
+    def handle_build_click(self, pos, to_construct):
+        build = self.app.game.map.get(pos)
+        
+        if build:
+            if self.app.event_controller.construction_mode: self.alert("Can't place that here !")
+            elif self.menu == build.menu:
                 self.hide_menu()
             else:
-                self.menu = targeted_tile.menu
-        elif to_construct:
-                self.menu = to_construct.menu
+                self.menu = build.menu
+                
+        elif self.app.event_controller.construction_mode:
+            self.app.event_controller.construct(pos)
+            
         else:
             self.hide_menu()
 

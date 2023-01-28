@@ -1,8 +1,10 @@
+import json
 from src.ressources import Sprite, load, TW, TH, sc_center, surf_width, surf_height
-# from src.graphical.gui import FactoryGui, CoreGui
+from src.graphical.build_menus import *
 import pygame
-from pygame_gui.elements import UIButton, UILabel, UIImage, UIPanel
 from time import time
+
+# Buildings defined at EOF
 
 class Building(Sprite):
     """Building on the map"""
@@ -11,15 +13,23 @@ class Building(Sprite):
     COST = 10
     TITLE = "Sample"
     DESCRIPTION = "Sample building to create others"
+    # if not Building in self.app.menu_controller.commands.construct_menu.BUILDINGS: self.app.menu_controller.commands.construct_menu.BUILDINGS.append(type(self))
+
     def __init__(self, pos:tuple[int,int], img_path:str, constructed:bool=False):
-        self.constructed = constructed
         super().__init__(pos, (self.W*TW, self.H*TH), img_path)
+        self.constructed = constructed
         self.menu = None
         if not self.constructed:
             self.cimg = self.img.copy()
             self.img.set_alpha(125)
+        self.buffer = 0
+        self.max_buffer = 200
 
-    def construct(self, pos=None, buy:bool=True):
+    @property
+    def NBT(self): return {"buffer":self.buffer, "pos":self.pos}
+    def str(self): return self.TITLE+json.dumps(self.NBT)
+
+    def construct(self, pos=None, buy:bool=True, send:bool=True):
         if buy:pass
         elif not self.app.menu_controller.buyable(self.COST, buy_possible=True) and self.constructed: return
         pos = pos if pos else self.pos
@@ -27,19 +37,36 @@ class Building(Sprite):
         self.pos = pos
         self.img = self.cimg
         self.constructed = True
+        if self.app.client.connected and send: self.app.client.construct(self)
+    
+    def run(self):
+        if not self.constructed: return
+        
 
-class Core(Building):
-    COST = 100
-    TITLE = "Core"
-    DESCRIPTION = "The core doesn't have a use for now... Sorry"
+class StringGenerator(Building):
+    COST = 10
+    DESCRIPTION = "Creates string from virtual particles. Give electricity to improve generation"
     IMG_PATH = "core"
-    def __init__(self, pos, constructed:bool=False):
-        super().__init__(pos,self.IMG_PATH, constructed)
+    def __init__(self, pos: tuple[int, int], constructed: bool = False):
+        super().__init__(pos, self.IMG_PATH, constructed)
         self.tier = 1
-        self.menu = CoreMenu(self)
+        self.menu = StringGenMenu(self)
 
-    # def gui(self):
-    #     return super()._add_gui(CoreGui(self))
+class Electroliser(Building):
+    COST = 10
+    DESCRIPTION = "Transforms strings into electrons"
+    IMG_PATH = "electroliser"
+    def __init__(self, pos: tuple[int, int], constructed: bool = False):
+        super().__init__(pos, self.IMG_PATH, constructed)
+        self.tier = 1
+        # self.menu = ElectroliserMenu(self)
+
+class Seller(Building):
+    COST = 10
+    DESCRIPTION = "Sells stuff for money $$"
+    IMG_PATH = "seller"
+    def __init__(self, pos: tuple[int, int], constructed: bool = False):
+        super().__init__(pos, self.IMG_PATH, constructed)
 
 class Factory(Building):
     W,H = 1,1
@@ -92,43 +119,16 @@ class Generator(Building):
     def tier(self, new_tier):
         self._tier = new_tier
 
-class BuildingMenu:
-    def __init__(self, building, title) -> None:
-        self.building = building
-        self.manager = self.building.game.manager
-        rect = pygame.Rect(0,0, surf_width()*.7, surf_height()*.7)
-        rect.center = sc_center()
-        self.container = UIPanel(rect, 1, self.manager)
-        self.title = UILabel(pygame.Rect(5,5,-1,-1), title, self.manager, self.container)
-        self.buttons = []
-        self.hide()
-    def hide(self):
-        self.container.hide()
-    def show(self):
-        self.container.show()
-    def toggle(self):
-        if self.container.visible:
-            self.hide()
-        else:self.show()
-    def button(self, title:str, tooltip:str="", on_click=None, *args):
-        brect = pygame.Rect(0,0, 200, 50)
-        brect.center = self.container.rect.w/2, self.container.rect.h/2
-        brect.y -= 30
-        brect.y += 60*len(self.buttons)
-        button = UIButton(brect, title, self.manager, self.container, tooltip)
-        self.buttons.append((button, on_click, args))
-        return button
-    def handle_click(self, event):
-        for button,func, args in self.buttons:
-            if event.ui_element == button:
-                if callable(func):func(*args)
+TITLES = {
+    "String-Generator": StringGenerator,
+    "Electroliser": Electroliser,
+    "Seller": Seller
+}
+BUILDS = {} # Reversed dict
+
+for title, build in TITLES.items():
+    build.TITLE = title
+    BUILDS[build] = title
 
 
-class CoreMenu(BuildingMenu):
-    def __init__(self, core:Core) -> None:
-        super().__init__(core, "Core menu")
-class FactoryMenu(BuildingMenu):
-    def __init__(self, factory:Factory) -> None:
-        super().__init__(factory, "Factory menu")
-        self.retrieve = self.button("Retrieve", "Click to retrieve points", factory.retrieve)
-        self.upgrade = self.button("Upgrade", "Click to upgrade this factory", factory.upgrade)
+BUILDINGS = TITLES.values()
