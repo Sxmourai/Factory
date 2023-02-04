@@ -38,7 +38,7 @@ class Building(Sprite):
         self.img = self.cimg
         self.constructed = True
         if self.app.client.connected and send: self.app.client.construct(self)
-    
+
     def run(self):
         if not self.constructed: return
         
@@ -51,6 +51,9 @@ class StringGenerator(Building):
         super().__init__(pos, self.IMG_PATH, constructed)
         self.tier = 1
         self.menu = StringGenMenu(self)
+    def run(self):
+        super().run()
+        self.menu.points.set_text("Buffer: "+str(self.buffer))
 
 class Electroliser(Building):
     COST = 10
@@ -59,7 +62,7 @@ class Electroliser(Building):
     def __init__(self, pos: tuple[int, int], constructed: bool = False):
         super().__init__(pos, self.IMG_PATH, constructed)
         self.tier = 1
-        # self.menu = ElectroliserMenu(self)
+        self.menu = ElectroliserMenu(self)
 
 class Seller(Building):
     COST = 10
@@ -101,7 +104,6 @@ class Factory(Building):
     def draw(self):
         for ball in self.balls:
             ball.move()
-
 
 class Generator(Building):
     COST = 500

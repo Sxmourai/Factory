@@ -2,7 +2,6 @@ import json
 import socket
 from typing import Any
 
-from src.world.build_containers import BuildContainer
 from src.server.src import *
 from src.world.buildings import Building, TITLES
 

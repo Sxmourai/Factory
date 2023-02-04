@@ -111,3 +111,6 @@ class Map:
             self.camera = self.game.camera
             self.surf = self.game.surf
             self.app = self.game.app
+    def handle_click(self, event):
+        for build in self.map.values():
+            build.handle_click(event)

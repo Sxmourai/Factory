@@ -6,7 +6,6 @@ import sys
 
 from src.server.parser import Parser
 from src.server.src import PORT, TILE_CHANGE, PLAYER_MOVEMENT, DISCONNECT
-from src.world.build_containers import BuildContainer
 
 
 class _ServerClient:pass
