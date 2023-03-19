@@ -1,5 +1,5 @@
 **/__pycache__
-python-src/testing
+python-src/tests.py
 python-src/requirements.txt
 .obsidian
 fusion/target
