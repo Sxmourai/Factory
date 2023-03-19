@@ -37,6 +37,8 @@ class Application:
         self.game.draw()
         self.manager.update(self.clock[0].tick(self.clock[1])/1000.0)
         self.manager.draw_ui(self.surf)
+        for build in self.game.map.map.values():
+            build.run()
         pygame.display.flip()
 
     def start(self):

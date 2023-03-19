@@ -100,12 +100,12 @@ class Commands(SimpleMenu):
         self.commands.append((button, func))
         return button
 
-    def handle_click(self, button_id: str):
+    def handle_click(self, event: pygame.event.Event):
         for button,func in self.commands:
-            if button_id == button.id:
+            if event.ui_element == button.button:
                 func()
                 return
-        self.construct_menu.handle_click(button_id)
+        self.construct_menu.handle_click(event)
 
 class StartMenu(GlobalMenu):
     def __init__(self, controller) -> None:
@@ -114,11 +114,12 @@ class StartMenu(GlobalMenu):
         self.load = UIButton(pygame.Rect(100,30,200,80), "Load Save", self.manager,self.container, "Click to load a game", object_id="@load_button", anchors={'center': 'center'})
         self.quit = UIButton(pygame.Rect(0,120,200,80), "Quit", self.manager,self.container, "Click to quit", object_id="@quit_button", anchors={'center': 'center'})
 
-    def handle_click(self, button_id: str):
-        super().handle_click(button_id)
-        if button_id == "@multi_button":
+    def handle_click(self, event: pygame.event.Event):
+        super().handle_click(event)
+        element = event.ui_element
+        if element == self.multi:
             self.controller.multi_menu.show()
-        elif button_id == "@load_button":
+        elif element == self.load:
             self.controller.load_menu.show()
 
 class LoadMenu(GlobalMenu):
@@ -134,10 +135,10 @@ class LoadMenu(GlobalMenu):
     def show(self):
         super().show()
 
-    def handle_click(self, button_id:str):
-        super().handle_click(button_id)
+    def handle_click(self, event:pygame.event.Event):
+        super().handle_click(event)
         for button,game in self.games:
-            if button_id == button.object_ids[-1]:
+            if event.ui_element == button:
                 self.load_game(game)
                 break
 
@@ -192,14 +193,16 @@ class MultiMenu(GlobalMenu):
             f.write(str(self.servers))
 
 
-    def handle_click(self, button_id:str):
-        super().handle_click(button_id)
-        if button_id == self.add_server_button.object_ids[-1]:self.add_server_popup.show()
-        elif button_id == self.add_server_submit.object_ids[-1]:self.add_server(self.add_server_ip.get_text());self.add_server_popup.hide()
+    def handle_click(self, event: pygame.event.Event):
+        super().handle_click(event)
+        button = event.ui_element
+        if button == self.add_server_button:   self.add_server_popup.show()
+        elif button == self.add_server_submit: self.add_server(self.add_server_ip.get_text());self.add_server_popup.hide()
         else:
-            for button, server_ip in self.servers_button:
-                if button_id == server_ip:
+            for server_button, server_ip in self.servers_button:
+                if button == server_button:
                     self.app.client.connect_to_server(server_ip)
+                    return
 
     def connect_to(self, server_ip:str):
         print("Connecting to "+server_ip)
@@ -239,15 +242,16 @@ class TitleScreen(GlobalMenu):
         self.app.menu_controller.prompt("Name of save: ")
         self.saving = True
 
-    def handle_click(self, button_id:str):
-        if button_id == "@quit_button":
+    def handle_click(self, event:pygame.event.Event):
+        button = event.ui_element
+        if button == self.q_lost:
             self.app.stop()
-        elif button_id == "@quit_save_button":
+        elif button == self.q_save:
             self.save()
             self.app.stop()
-        elif button_id == "@disconnect_button":
+        elif button == self.disconnect:
             self.app.client.disconnect()
-        else:super().handle_click(button_id)
+        else:super().handle_click(event)
 
 
 class GameSave:
@@ -326,12 +330,12 @@ class ConstructMenu(SimpleMenu):
         descr_rect.centerx = w/2+15
         button_container.description = UITextBox(f"<font size=2.5>{description}</font>", descr_rect, self.manager, container=container, object_id="#construct_desc")
 
-        self.buttons.append((text, func, args))
+        self.buttons.append((button_container, func, args))
         return button_container
 
-    def handle_click(self, button_id):
-        for bid,func,args in self.buttons:
-            if button_id == bid:
+    def handle_click(self, event:pygame.event.Event):
+        for button,func,args in self.buttons:
+            if event.ui_element == button:
                 func(*args)
 # class Menu(Sprite):
 #     def __init__(self, pos: tuple | None, size: tuple, imgpath):

@@ -1,6 +1,5 @@
-releases
-.vscode
 **/__pycache__
-testing
-requirements.txt
-env
+python-src/testing
+python-src/requirements.txt
+.obsidian
+fusion/src/target

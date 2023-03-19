@@ -53,17 +53,17 @@ class Map:
         return self.map.pop(index)
     def set(self, pos, obj, size=(1,1)):
         self.map[pos] = obj
-    def adj(self, coords):
-        adj = {}
+    def adjacents(self, coords):
+        adj = []
         x,y = coords
         if self.get((x+1, y)):
-            adj['right'] = self.map[(x+1, y)]
+            adj.append(self.map[(x+1, y)])
         if self.get((x-1, y)):
-            adj['left'] = self.map[(x-1, y)]
+            adj.append(self.map[(x-1, y)])
         if self.get((x, y+1)):
-            adj['down'] = self.map[(x, y+1)]
+            adj.append(self.map[(x, y+1)])
         if self.get((x, y-1)):
-            adj['up'] = self.map[(x, y-1)]
+            adj.append(self.map[(x, y-1)])
         return adj
     
     def select(self, img:pygame.Surface | None=None):
@@ -85,11 +85,13 @@ class Map:
 
     def load_map(self, world:dict|list=None):
         self.start()
-        if not world: return
+        if not world: 
+            self.game_save = None
+            return
         if isinstance(world, dict):
-            for pos, nbts in world.items():
+            for pos, type,nbts in world.items():
                 pos = tuple([int(cpos) for cpos in pos.split(",")])
-                self.map[pos] = Parser.create_build(pos, nbts)
+                self.map[pos] = Parser.create_build(type, nbts)
 
     def unload_map(self) -> dict:
         unloaded_map = {}
@@ -105,9 +107,13 @@ class Map:
             self.map[tuple(nbts["pos"])].construct(buy=False, send=False)
     
     def start(self):
-        if self.game: self.map = {}
+        if self.game: 
+            self.map = {}
         else:
             self.game = get_game()
             self.camera = self.game.camera
             self.surf = self.game.surf
             self.app = self.game.app
+    def handle_click(self, event):
+        for build in self.map.values():
+            build.handle_click(event)

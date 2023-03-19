@@ -43,7 +43,6 @@ class Camera:
                 self.players.append(Player(move, player))
 
     def draw_players(self):
-        print([player.pseudo for player in self.players], end="\r")
         for player in self.players:
             player.draw()
         self.surf.blit(self.player.img, pygame.Rect(self.surf.get_width()/2-self.player.w/2,self.surf.get_height()/2-self.player.h/2,self.player.w,self.player.h))

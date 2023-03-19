@@ -2,7 +2,6 @@ import json
 import socket
 from typing import Any
 
-from src.world.build_containers import BuildContainer
 from src.server.src import *
 from src.world.buildings import Building, TITLES
 
@@ -32,6 +31,14 @@ class Parser:
             parsed += f"{PLAYER_MOVEMENT}{player[0]}{MODE_DELIMITER}{player[1]}{END_DELIMITER}"
         parsed += f"{INIT_MARKER}Pos{MODE_DELIMITER}{player_pos[0]},{player_pos[1]}{END_DELIMITER}"
         return parsed
+
+    @staticmethod
+    def create_build(type:str, nbts:dict, construct:bool=True):
+        build = TITLES[type](nbts["pos"])
+        build.buffer = nbts["buffer"]
+        if construct: build.construct(buy=False, send=False)
+        return build
+
 
     @staticmethod
     def create_build_from_str(build:str, construct:bool=True) -> Building:

@@ -47,11 +47,10 @@ class MenuController:
 
 
     def handle_button_click_event(self, event):
-        button_id = event.ui_element.object_ids[-1]
         if self.menu:
-            self.menu.handle_click(button_id)
+            self.menu.handle_click(event)
         else:
-            self.handle_static_click(button_id)
+            self.handle_static_click(event)
 
     def handle_build_click(self, pos, to_construct):
         build = self.app.game.map.get(pos)

@@ -25,6 +25,7 @@ class EventController:
         for event in pygame.event.get():
             if event.type == UI_BUTTON_PRESSED:
                 self.app.menu_controller.handle_button_click_event(event)
+                # self.game.map.handle_click(event)
                 return
 
 

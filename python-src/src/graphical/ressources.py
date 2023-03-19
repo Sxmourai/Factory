@@ -12,6 +12,8 @@ class BasicMenu(ABC):
         self.game = self.app.game
         self.manager = self.app.manager
         self.controller = controller
+        self.back = None
+        self.quit = None
 
     @property
     def visible(self): return self.container.visible
@@ -19,10 +21,10 @@ class BasicMenu(ABC):
     def _show(self):self.container.show()
     def show(self):self.controller.menu = self
     def toggle(self): self.hide() if self.visible else self.show()
-    def handle_click(self, button_id:str):
-        if button_id == "@back_button":
+    def handle_click(self, event:pygame.event.Event):
+        if event.ui_element == self.back:
             self.controller.back()
-        if button_id == "@quit_button":
+        if event.ui_element == self.quit:
             self.app.exit()
 
 
