@@ -3,3 +3,5 @@ python-src/tests.py
 python-src/requirements.txt
 .obsidian
 .vscode
+Godot/.godot
+Godot/icon.svg
