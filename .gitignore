@@ -2,4 +2,4 @@
 python-src/tests.py
 python-src/requirements.txt
 .obsidian
-fusion/target
+.vscode
