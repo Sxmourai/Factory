@@ -1,7 +1,7 @@
-use bevy::{prelude::*, input::common_conditions::input_toggle_active, render::camera::ScalingMode};
+use bevy::{prelude::*, input::common_conditions::input_toggle_active};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
-use crate::{player::{player_movement, Player}, ui::{Money, game_ui}};
+use crate::{player::{player_movement, Player}, ui::{UIPlugin, update_ui}, world::{draw_world, World}};
 
 pub fn get_window_plugin() -> WindowPlugin {
     WindowPlugin {
@@ -9,6 +9,7 @@ pub fn get_window_plugin() -> WindowPlugin {
         title: "Factory game".into(),
         resolution: (640.0, 480.0).into(),
         resizable:false,
+        position: WindowPosition::At(IVec2 { x: 1000, y: 400 }),
         ..default()
     }),
     ..default()
@@ -20,32 +21,15 @@ impl Plugin for SetupPlugin {
         app.add_plugins((DefaultPlugins
             .set(ImagePlugin::default_nearest())
             .set(get_window_plugin()),
-            WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape))
+            WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Escape)),
+            UIPlugin {},
         ))
-        .add_systems(Startup, setup)
-        .add_systems(Startup, game_ui)
+        .add_systems(Startup, crate::camera::Camera::spawn)
+        .add_systems(Startup, Player::spawn)
+        .add_systems(Update, draw_world)
         .add_systems(Update, player_movement)
-        .insert_resource(Money(100.0))
+        .add_systems(Update, update_ui)
+        .insert_resource(World::new(0))
         ;
     }
-}
-
-
-fn setup(mut commands: Commands, assets: Res<AssetServer>) {
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scaling_mode = ScalingMode::AutoMin { min_width: 256.0, min_height: 144.0 };
-    commands.spawn(camera);
-
-    let texture = assets.load("tile.png");
-
-    commands.spawn((SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(Vec2::new(100.0, 100.0)),
-            ..default()
-        },
-        texture,
-        ..default()
-    },
-    Player {speed:100.0, pos: Vec2::ZERO},
-    ));
 }
