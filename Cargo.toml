@@ -10,3 +10,4 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.11.0", features = ["dynamic_linking"]}
+bevy-inspector-egui = "0.19"
