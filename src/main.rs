@@ -1,16 +1,15 @@
-#![allow(unused_mut)]
-mod setup;
-mod renderer;
-mod player;
+#![allow(unused_imports)]
+use macroquad::prelude::*;
+use ui::draw_ui;
+
 mod ui;
-mod camera;
-mod world;
 
-use bevy::prelude::*;
-use setup::SetupPlugin;
-
-fn main() {
-    App::new()
-    .add_plugins(SetupPlugin)
-    .run();
+#[macroquad::main("")]
+async fn main() {
+    loop {
+        clear_background(BLACK);
+        
+        draw_ui();
+        next_frame().await
+    }
 }
