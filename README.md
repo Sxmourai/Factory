@@ -1,3 +1,8 @@
+# ARCHIVED
+
+I'm archiving this repo because I stopped working on this project, currently I'm working on a x86_64 operating system & all...
+MAYBE I will work back on it, if I'm (re?)-interrested in game development & physics
+
 # Factory
 
 This is an automation game
